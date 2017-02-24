@@ -4,8 +4,8 @@
     <id>PodAnalyzer</id>
     <version>0.0.1.0</version>
     <title>PodAnalyzer</title>
-    <authors>rikki</authors>
-    <owners>rikki</owners>
+    <authors>Rikki Gibson</authors>
+    <owners>Rikki Gibson</owners>
     <licenseUrl>https://github.com/RikkiGibson/PodAnalyzer/blob/master/LICENSE.txt</licenseUrl>
     <projectUrl>https://github.com/RikkiGibson/PodAnalyzer</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
