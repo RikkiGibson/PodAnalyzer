@@ -22,7 +22,7 @@ namespace PodAnalyzer
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(PodAnalyzerAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(PodAnalyzer.DiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()

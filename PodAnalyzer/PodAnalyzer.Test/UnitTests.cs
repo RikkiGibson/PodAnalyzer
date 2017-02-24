@@ -37,16 +37,21 @@ namespace PodAnalyzer.Test
     {
         class TypeName
         {   
+            string Prop { get; }
+            TypeName()
+            {
+                Prop = Prop;
+            }
         }
     }";
             var expected = new DiagnosticResult
             {
-                Id = "PodAnalyzer",
-                Message = String.Format("Type name '{0}' contains lowercase letters", "TypeName"),
+                Id = "PropertySelfAssign",
+                Message = String.Format("Property '{0}' is assigned to itself", "Prop"),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 11, 15)
+                            new DiagnosticResultLocation("Test0.cs", 16, 17)
                         }
             };
 
@@ -66,7 +71,7 @@ namespace PodAnalyzer.Test
         {   
         }
     }";
-            VerifyCSharpFix(test, fixtest);
+            //VerifyCSharpFix(test, fixtest);
         }
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
@@ -76,7 +81,7 @@ namespace PodAnalyzer.Test
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
-            return new PodAnalyzerAnalyzer();
+            return new PodAnalyzer();
         }
     }
 }
