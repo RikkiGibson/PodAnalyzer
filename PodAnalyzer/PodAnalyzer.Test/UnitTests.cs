@@ -37,17 +37,13 @@ namespace PodAnalyzer.Test
     {
         class TypeName
         {   
-            string Prop { get; }
-            TypeName()
-            {
-                Prop = Prop;
-            }
+            string Prop { get; set; }
         }
     }";
             var expected = new DiagnosticResult
             {
-                Id = "PropertySelfAssign",
-                Message = String.Format("Property '{0}' is assigned to itself", "Prop"),
+                Id = "POD002",
+                Message = String.Format("Getter-only property '{0}' was never assigned to", "Prop"),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
@@ -55,7 +51,7 @@ namespace PodAnalyzer.Test
                         }
             };
 
-            VerifyCSharpDiagnostic(test, expected);
+            //VerifyCSharpDiagnostic(test, expected);
 
             var fixtest = @"
     using System;
@@ -67,11 +63,12 @@ namespace PodAnalyzer.Test
 
     namespace ConsoleApplication1
     {
-        class TYPENAME
+        class TypeName
         {   
+            string Prop { get; }
         }
     }";
-            //VerifyCSharpFix(test, fixtest);
+            VerifyCSharpFix(test, fixtest);
         }
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
@@ -81,7 +78,7 @@ namespace PodAnalyzer.Test
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
-            return new PodAnalyzer();
+            return new TypeCanBeImmutableAnalyzer();
         }
     }
 }

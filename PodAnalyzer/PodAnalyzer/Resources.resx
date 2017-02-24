@@ -117,16 +117,40 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AnalyzerDescription" xml:space="preserve">
+  <data name="POD001Description" xml:space="preserve">
     <value>Property should not be assigned to itself</value>
     <comment>An optional longer localizable description of the diagnostic.</comment>
   </data>
-  <data name="AnalyzerMessageFormat" xml:space="preserve">
+  <data name="POD001MessageFormat" xml:space="preserve">
     <value>Property '{0}' is assigned to itself</value>
     <comment>The format-able message the diagnostic displays.</comment>
   </data>
-  <data name="AnalyzerTitle" xml:space="preserve">
+  <data name="POD001Title" xml:space="preserve">
     <value>Property should not be assigned to itself</value>
+    <comment>The title of the diagnostic.</comment>
+  </data>
+  <data name="POD002Description" xml:space="preserve">
+    <value>Getter-only properties should be assigned to</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="POD002MessageFormat" xml:space="preserve">
+    <value>Getter-only property '{0}' was never assigned to</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="POD002Title" xml:space="preserve">
+    <value>Getter-only properties should be assigned to</value>
+    <comment>The title of the diagnostic.</comment>
+  </data>
+  <data name="POD003Description" xml:space="preserve">
+    <value>Type can be made immutable</value>
+    <comment>An optional longer localizable description of the diagnostic.</comment>
+  </data>
+  <data name="POD003MessageFormat" xml:space="preserve">
+    <value>Type '{0}' can be made immutable</value>
+    <comment>The format-able message the diagnostic displays.</comment>
+  </data>
+  <data name="POD003Title" xml:space="preserve">
+    <value>Type can be made immutable</value>
     <comment>The title of the diagnostic.</comment>
   </data>
 </root>

@@ -18,16 +18,15 @@ namespace PodAnalyzer
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PodAnalyzerCodeFixProvider)), Shared]
     public class PodAnalyzerCodeFixProvider : CodeFixProvider
     {
-        private const string title = "Make uppercase";
+        private const string title = "Make properties getter only and generate constructor";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(PodAnalyzer.DiagnosticId); }
+            get { return ImmutableArray<string>.Empty; }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
         {
-            // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/FixAllProvider.md for more information on Fix All Providers
             return WellKnownFixAllProviders.BatchFixer;
         }
 
@@ -35,39 +34,52 @@ namespace PodAnalyzer
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
             var diagnostic = context.Diagnostics.First();
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().First();
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
+                    createChangedSolution: c => MakeImmutableAsync(context.Document, declaration, c),
                     equivalenceKey: title),
                 diagnostic);
         }
 
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private static PropertyDeclarationSyntax GetterOnlyProperty(PropertyDeclarationSyntax propertySyntax)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
+            var newAccessors = propertySyntax.AccessorList.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
+            var newAccessorList = propertySyntax.AccessorList.WithAccessors(SyntaxFactory.List(newAccessors));
+            var newProperty = propertySyntax.WithAccessorList(newAccessorList);
 
-            // Get the symbol representing the type to be renamed.
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            return newProperty;
+        }
 
-            // Produce a new solution that has all references to that type renamed, including the declaration.
-            var originalSolution = document.Project.Solution;
-            var optionSet = originalSolution.Workspace.Options;
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
+        private async Task<Solution> MakeImmutableAsync(Document document, ClassDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        {
+            var autoProperties = typeDecl.Members
+                .OfType<PropertyDeclarationSyntax>()
+                .Where(ps => ps.AccessorList.Accessors.Any(a => a.Body == null))
+                .ToImmutableArray();
 
-            // Return the new solution with the now-uppercase type name.
-            return newSolution;
+            var getterProperties = autoProperties
+                .Select(ps => GetterOnlyProperty(ps));
+
+            var otherMembers = typeDecl.Members
+                .Where(ps => !autoProperties.Contains(ps));
+
+            var newMembers = SyntaxFactory.List(getterProperties.Concat(otherMembers));
+            var newTypeDecl = typeDecl.WithMembers(newMembers);
+
+            var root = await document.GetSyntaxRootAsync();
+            var newRoot = root.ReplaceNode(typeDecl, newTypeDecl);
+
+            var newDoc = document.WithSyntaxRoot(newRoot);
+
+            return newDoc.Project.Solution;
         }
     }
 }

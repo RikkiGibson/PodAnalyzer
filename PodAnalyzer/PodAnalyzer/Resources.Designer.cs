@@ -64,27 +64,81 @@ namespace PodAnalyzer {
         /// <summary>
         ///   Looks up a localized string similar to Property should not be assigned to itself.
         /// </summary>
-        internal static string AnalyzerDescription {
+        internal static string POD001Description {
             get {
-                return ResourceManager.GetString("AnalyzerDescription", resourceCulture);
+                return ResourceManager.GetString("POD001Description", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Property &apos;{0}&apos; is assigned to itself.
         /// </summary>
-        internal static string AnalyzerMessageFormat {
+        internal static string POD001MessageFormat {
             get {
-                return ResourceManager.GetString("AnalyzerMessageFormat", resourceCulture);
+                return ResourceManager.GetString("POD001MessageFormat", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Property should not be assigned to itself.
         /// </summary>
-        internal static string AnalyzerTitle {
+        internal static string POD001Title {
             get {
-                return ResourceManager.GetString("AnalyzerTitle", resourceCulture);
+                return ResourceManager.GetString("POD001Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Getter-only properties should be assigned to.
+        /// </summary>
+        internal static string POD002Description {
+            get {
+                return ResourceManager.GetString("POD002Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Getter-only property &apos;{0}&apos; was never assigned to.
+        /// </summary>
+        internal static string POD002MessageFormat {
+            get {
+                return ResourceManager.GetString("POD002MessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Getter-only properties should be assigned to.
+        /// </summary>
+        internal static string POD002Title {
+            get {
+                return ResourceManager.GetString("POD002Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type can be made immutable.
+        /// </summary>
+        internal static string POD003Description {
+            get {
+                return ResourceManager.GetString("POD003Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; can be made immutable.
+        /// </summary>
+        internal static string POD003MessageFormat {
+            get {
+                return ResourceManager.GetString("POD003MessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type can be made immutable.
+        /// </summary>
+        internal static string POD003Title {
+            get {
+                return ResourceManager.GetString("POD003Title", resourceCulture);
             }
         }
     }

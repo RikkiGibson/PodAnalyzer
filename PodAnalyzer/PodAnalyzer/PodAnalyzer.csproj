@@ -35,7 +35,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CodeFixProvider.cs" />
-    <Compile Include="PodAnalyzer.cs" />
+    <Compile Include="TypeCanBeImmutableAnalyzer.cs" />
+    <Compile Include="GetterOnlyPropertyNeverAssignedAnalyzer.cs" />
+    <Compile Include="PropertyAssignToSelfAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
