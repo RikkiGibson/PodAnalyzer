@@ -35,6 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CodeFixProvider.cs" />
+    <Compile Include="ConstructorParameterNeverAssignedAnalyzer.cs" />
     <Compile Include="TypeCanBeImmutableAnalyzer.cs" />
     <Compile Include="GetterOnlyPropertyNeverAssignedAnalyzer.cs" />
     <Compile Include="PropertyAssignToSelfAnalyzer.cs" />

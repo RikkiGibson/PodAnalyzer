@@ -141,5 +141,32 @@ namespace PodAnalyzer {
                 return ResourceManager.GetString("POD003Title", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Constructor parameters should be used.
+        /// </summary>
+        internal static string POD004Description {
+            get {
+                return ResourceManager.GetString("POD004Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; was never used.
+        /// </summary>
+        internal static string POD004MessageFormat {
+            get {
+                return ResourceManager.GetString("POD004MessageFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Constructor parameters should be used.
+        /// </summary>
+        internal static string POD004Title {
+            get {
+                return ResourceManager.GetString("POD004Title", resourceCulture);
+            }
+        }
     }
 }
