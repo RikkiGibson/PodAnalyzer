@@ -38,18 +38,24 @@ namespace PodAnalyzer
                 return;
             }
 
-            if (!await IsGetterPropertyAssigned(context, property))
+            if (!await IsAutoGetterPropertyAssigned(context, property))
             {
                 context.ReportDiagnostic(Diagnostic.Create(Rule, property.Locations[0], property.Name));
             }
         }
 
-        private static async Task<bool> IsGetterPropertyAssigned(SymbolAnalysisContext context, IPropertySymbol property)
+        private static async Task<bool> IsAutoGetterPropertyAssigned(SymbolAnalysisContext context, IPropertySymbol property)
         {
             foreach (var syntaxRef in property.DeclaringSyntaxReferences)
             {
                 var propertySyntax = (PropertyDeclarationSyntax)await syntaxRef.GetSyntaxAsync();
                 if (propertySyntax.Initializer != null)
+                {
+                    return true;
+                }
+                
+                // If accessor body is non-null, this is a computed property, not an auto property
+                if (propertySyntax.AccessorList.Accessors.Any(a => a.Body != null))
                 {
                     return true;
                 }

@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using TestHelper;
-using PodAnalyzer;
 
 namespace PodAnalyzer.Test
 {
@@ -39,15 +38,17 @@ namespace PodAnalyzer.Test
         {   
             string Prop { get; set; }
         }
+
+        class OtherType { }
     }";
             var expected = new DiagnosticResult
             {
                 Id = "POD002",
-                Message = String.Format("Getter-only property '{0}' was never assigned to", "Prop"),
+                Message = String.Format("Type '{0}' can be made immutable", "TypeName"),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 16, 17)
+                            new DiagnosticResultLocation("Test0.cs", 11, 14)
                         }
             };
 
@@ -66,7 +67,13 @@ namespace PodAnalyzer.Test
         class TypeName
         {   
             string Prop { get; }
+            public TypeName(string prop)
+            {
+                Prop = prop;
+            }
         }
+
+        class OtherType { }
     }";
             VerifyCSharpFix(test, fixtest);
         }
