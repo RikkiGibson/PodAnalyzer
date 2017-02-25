@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class GetterPropertyNeverAssignedAnalyzer : DiagnosticAnalyzer
     {
-        private static DiagnosticDescriptor Rule =
+        internal static DiagnosticDescriptor Rule =
             new DiagnosticDescriptor(id: "POD002",
                 title: new LocalizableResourceString(nameof(Resources.POD002Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD002MessageFormat), Resources.ResourceManager, typeof(Resources)),

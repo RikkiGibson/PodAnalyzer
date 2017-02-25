@@ -30,7 +30,7 @@ namespace PodAnalyzer
             context.RegisterSyntaxNodeAction(AnalyzeNamedTypeDeclaration, SyntaxKind.ClassDeclaration);
         }
 
-        private void AnalyzeNamedTypeDeclaration(SyntaxNodeAnalysisContext context)
+        private static void AnalyzeNamedTypeDeclaration(SyntaxNodeAnalysisContext context)
         {
             if (context.Node.IsKind(SyntaxKind.ClassDeclaration))
             {
@@ -38,13 +38,33 @@ namespace PodAnalyzer
             }
         }
 
-        private void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax node)
+        private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax node)
         {
-            var properties = node.Members.OfType<PropertyDeclarationSyntax>();
-            if (properties.Any())
+            var hasMutableAutoProperty = node.Members
+                .OfType<PropertyDeclarationSyntax>()
+                .Any(p => IsMutableAutoProperty(p));
+
+            if (hasMutableAutoProperty)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Rule, node.GetLocation(), node.Identifier));
             }
+        }
+
+        private static bool IsMutableAutoProperty(PropertyDeclarationSyntax property)
+        {
+            var getter = property.AccessorList.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
+            if (getter == null || getter.Body != null)
+            {
+                return false;
+            }
+
+            var setter = property.AccessorList.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
+            if (setter == null)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

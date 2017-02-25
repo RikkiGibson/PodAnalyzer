@@ -22,7 +22,7 @@ namespace PodAnalyzer
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(TypeCanBeImmutableAnalyzer.Rule.Id); }
+            get { return ImmutableArray.Create(TypeCanBeImmutableAnalyzer.Rule.Id, GetterPropertyNeverAssignedAnalyzer.Rule.Id); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -131,7 +131,8 @@ namespace PodAnalyzer
                     identifier: typeDecl.Identifier,
                     parameterList: parmsList,
                     initializer: null,
-                    body: SyntaxFactory.Block(statements));
+                    body: SyntaxFactory.Block(statements))
+                .NormalizeWhitespace(elasticTrivia: true);
 
             return ctor;
         }
@@ -142,15 +143,8 @@ namespace PodAnalyzer
                 .WithMembers(RewriteMembers(typeDecl))
                 .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
 
-            var ctor = newTypeDecl.Members
-                .OfType<ConstructorDeclarationSyntax>()
-                .First();
-
-            var indentedCtor = ctor.NormalizeWhitespace(elasticTrivia: true);
-            var indentedTypeDecl = newTypeDecl.ReplaceNode(ctor, indentedCtor);
-
             var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var newRoot = root.ReplaceNode(typeDecl, indentedTypeDecl);
+            var newRoot = root.ReplaceNode(typeDecl, newTypeDecl);
 
             var newDoc = document.WithSyntaxRoot(newRoot);
 
