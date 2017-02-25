@@ -34,7 +34,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CodeFixProvider.cs" />
+    <Compile Include="ConstructorCallProvider.cs" />
+    <Compile Include="ConstructorProvider.cs" />
     <Compile Include="ConstructorParameterNeverAssignedAnalyzer.cs" />
     <Compile Include="TypeCanBeImmutableAnalyzer.cs" />
     <Compile Include="GetterOnlyPropertyNeverAssignedAnalyzer.cs" />

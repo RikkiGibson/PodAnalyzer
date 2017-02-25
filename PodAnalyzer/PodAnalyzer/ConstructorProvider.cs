@@ -15,8 +15,8 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace PodAnalyzer
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PodAnalyzerCodeFixProvider)), Shared]
-    public class PodAnalyzerCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ConstructorProvider)), Shared]
+    public class ConstructorProvider : CodeFixProvider
     {
         private const string title = "Make properties getter only and generate constructor";
 
