@@ -104,6 +104,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Analyzer\Test1.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\Test1.out.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Compile Include="AnalyzerTester.cs" />
     <Compile Include="Verifiers\CodeFixVerifier.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
     <Compile Include="Helpers\CodeFixVerifier.Helper.cs" />
@@ -127,5 +134,6 @@
   <ItemGroup>
     <Analyzer Include="..\PodAnalyzer\bin\Release\PodAnalyzer.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

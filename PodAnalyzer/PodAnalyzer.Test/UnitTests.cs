@@ -8,16 +8,17 @@ using TestHelper;
 namespace PodAnalyzer.Test
 {
     [TestClass]
-    public class UnitTest : CodeFixVerifier
+    public class UnitTest
     {
+        static readonly AnalyzerTester tester = new AnalyzerTester(
+            resourceFolderPath: "Resources/Analyzer",
+            analyzer: new PropertyAssignToSelfAnalyzer());
 
-        //No diagnostics expected to show up
         [TestMethod]
         public void TestMethod1()
         {
-            var test = @"";
-
-            VerifyCSharpDiagnostic(test);
+            var diags = tester.ComputeDiagnostics(testFilename: "Test1.cs").Result;
+            Assert.Equals(diags.Length, 1);
         }
 
         //Diagnostic and CodeFix both triggered and checked for
@@ -75,17 +76,6 @@ namespace PodAnalyzer.Test
 
         class OtherType { }
     }";
-            VerifyCSharpFix(test, fixtest);
-        }
-
-        protected override CodeFixProvider GetCSharpCodeFixProvider()
-        {
-            return new PodAnalyzerCodeFixProvider();
-        }
-
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
-        {
-            return new TypeCanBeImmutableAnalyzer();
         }
     }
 }
