@@ -34,12 +34,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ConstructorCallProvider.cs" />
-    <Compile Include="ConstructorProvider.cs" />
-    <Compile Include="ConstructorParameterNeverAssignedAnalyzer.cs" />
-    <Compile Include="TypeCanBeImmutableAnalyzer.cs" />
-    <Compile Include="GetterOnlyPropertyNeverAssignedAnalyzer.cs" />
-    <Compile Include="PropertyAssignToSelfAnalyzer.cs" />
+    <Compile Include="CodeFix\ConstructorCallProvider.cs" />
+    <Compile Include="CodeFix\ConstructorProvider.cs" />
+    <Compile Include="Diagnostic\ConstructorParameterNeverAssignedAnalyzer.cs" />
+    <Compile Include="Diagnostic\GetterOnlyPropertyNeverAssignedAnalyzer.cs" />
+    <Compile Include="Diagnostic\PropertyAssignToSelfAnalyzer.cs" />
+    <Compile Include="Diagnostic\TypeCanBeImmutableAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -54,11 +54,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Diagnostic.nuspec">
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
+    <None Include="PodAnalyzer.nuspec" />
     <None Include="tools\install.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
