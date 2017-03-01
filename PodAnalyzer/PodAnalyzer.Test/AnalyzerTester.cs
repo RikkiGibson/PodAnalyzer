@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PodAnalyzer.Test
 {
-    internal class AnalyzerTester
+    public class AnalyzerTester
     {
         private static readonly ImmutableArray<MetadataReference> _coreReferences = ImmutableArray.Create<MetadataReference>(
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
@@ -30,7 +30,7 @@ namespace PodAnalyzer.Test
             _analyzer = analyzer;
         }
 
-        private Project CreateTestProject(string testFilename)
+        public Project CreateTestProject(string testFilename)
         {
             var path = Path.Combine(_resourceFolderPath, testFilename);
             var source = File.ReadAllText(path);
@@ -40,12 +40,11 @@ namespace PodAnalyzer.Test
             return document.Project;
         }
 
-        internal async Task<ImmutableArray<Diagnostic>> ComputeDiagnostics(string testFilename)
+        public async Task<ImmutableArray<Diagnostic>> ComputeDiagnostics(Project project)
         {
-            var project = CreateTestProject(testFilename);
             var comp = await project.GetCompilationAsync();
             var compAnalyzed = comp.WithAnalyzers(ImmutableArray.Create(_analyzer));
-            var diagnostics = await compAnalyzed.GetAnalyzerDiagnosticsAsync();
+            var diagnostics = await compAnalyzed.GetAllDiagnosticsAsync();
             return diagnostics;
         }
     }

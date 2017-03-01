@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class PropertyAssignToSelfAnalyzer : DiagnosticAnalyzer
     {
-        private static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor Rule =
             new DiagnosticDescriptor(id: "POD001",
                 title: new LocalizableResourceString(nameof(Resources.POD001Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD001MessageFormat), Resources.ResourceManager, typeof(Resources)),

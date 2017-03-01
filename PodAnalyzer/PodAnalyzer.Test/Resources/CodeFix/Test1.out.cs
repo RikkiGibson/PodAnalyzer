@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace PodAnalyzer.Test.Resources
 {
-    class Test1
+    public class Test1
     {
+        string Foo { get; }
+
+        public Test1(
+            string foo)
+        {
+            Foo = foo;
+        }
     }
 }

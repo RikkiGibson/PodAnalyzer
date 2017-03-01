@@ -93,15 +93,26 @@ namespace PodAnalyzer
             ObjectCreationExpressionSyntax creationExpression,
             CancellationToken cancellationToken)
         {
+            var leadingTrivia = creationExpression.Ancestors()
+                .OfType<StatementSyntax>()
+                .First()
+                .GetLeadingTrivia()
+                .AddRange(SyntaxFactory.ParseLeadingTrivia("    "));
+
             var args = creationExpression.Initializer.Expressions
                 .OfType<AssignmentExpressionSyntax>()
-                .Select(e => GenerateArgument(e));
+                .Select(e => GenerateArgument(e).WithLeadingTrivia(leadingTrivia).WithoutTrailingTrivia())
+                .ToImmutableArray();
+            
+            var separators = Enumerable.Repeat(SyntaxFactory.ParseToken(",\n"), args.Length - 1);
 
-            var argList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(args));
+            var argList = SyntaxFactory.ArgumentList(
+                SyntaxFactory.ParseToken("(\n"),
+                SyntaxFactory.SeparatedList(args, separators),
+                SyntaxFactory.ParseToken(")"));
 
             var newCreation = SyntaxFactory
-                .ObjectCreationExpression(creationExpression.Type, argList, null)
-                .NormalizeWhitespace();
+                .ObjectCreationExpression(creationExpression.Type.WithTrailingTrivia(), argList, null);
 
             var root = await document.GetSyntaxRootAsync(cancellationToken);
             var newRoot = root.ReplaceNode(creationExpression, newCreation);

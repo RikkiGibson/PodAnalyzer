@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Formatting;
 
 namespace PodAnalyzer
 {
@@ -91,12 +92,14 @@ namespace PodAnalyzer
             var newIdString = idString.Substring(0, 1).ToLower() + idString.Substring(1);
             var newIdToken = SyntaxFactory.Identifier(newIdString);
 
-            var param = SyntaxFactory.Parameter(
-                attributeLists: SyntaxFactory.List<AttributeListSyntax>(),
-                modifiers: SyntaxFactory.TokenList(),
-                type: property.Type,
-                identifier: newIdToken,
-                @default: null);
+            var param = SyntaxFactory
+                .Parameter(
+                    attributeLists: SyntaxFactory.List<AttributeListSyntax>(),
+                    modifiers: SyntaxFactory.TokenList(),
+                    type: property.Type,
+                    identifier: newIdToken,
+                    @default: null)
+                .NormalizeWhitespace(elasticTrivia: true);
 
             return param;
         }
@@ -105,7 +108,10 @@ namespace PodAnalyzer
             PropertyDeclarationSyntax property,
             ParameterSyntax parm)
         {
-            var exprStatement = (ExpressionStatementSyntax)SyntaxFactory.ParseStatement($"{property.Identifier} = {parm.Identifier};\n");
+            var exprStatement = (ExpressionStatementSyntax)SyntaxFactory
+                .ParseStatement($"{property.Identifier} = {parm.Identifier};\n")
+                .NormalizeWhitespace(elasticTrivia: true)
+                .WithTrailingTrivia(SyntaxFactory.ParseTrailingTrivia("\n"));
 
             return exprStatement;
         }
@@ -114,9 +120,13 @@ namespace PodAnalyzer
             ClassDeclarationSyntax typeDecl,
             ImmutableArray<PropertyDeclarationSyntax> properties)
         {
-            var parms = properties.Select(p => GenerateParameter(p)).ToImmutableArray();
-            var separatedList = SyntaxFactory.SeparatedList(parms);
-            var parmsList = SyntaxFactory.ParameterList(separatedList);
+            var leadingTrivia = typeDecl.GetLeadingTrivia();
+            var parms = properties.Select(p => GenerateParameter(p).WithLeadingTrivia(leadingTrivia)).ToImmutableArray();
+            var separator = SyntaxFactory.ParseToken(",\n");
+            var separators = Enumerable.Repeat(separator, parms.Length - 1);
+            var separatedList = SyntaxFactory.SeparatedList(parms, separators);
+            
+            var parmsList = SyntaxFactory.ParameterList(SyntaxFactory.ParseToken("(\n"), separatedList, SyntaxFactory.Token(SyntaxKind.CloseParenToken));
 
             var statements = new ExpressionStatementSyntax[parms.Length];
             for (var i = 0; i < parms.Length; i++)
@@ -128,11 +138,10 @@ namespace PodAnalyzer
                 .ConstructorDeclaration(
                     attributeLists: SyntaxFactory.List<AttributeListSyntax>(),
                     modifiers: SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)),
-                    identifier: typeDecl.Identifier,
+                    identifier: typeDecl.Identifier.WithTrailingTrivia(),
                     parameterList: parmsList,
                     initializer: null,
-                    body: SyntaxFactory.Block(statements))
-                .NormalizeWhitespace(elasticTrivia: true);
+                    body: SyntaxFactory.Block(statements));
 
             return ctor;
         }
