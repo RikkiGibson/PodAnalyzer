@@ -10,8 +10,6 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.Formatting;
 
 namespace PodAnalyzer
@@ -19,6 +17,7 @@ namespace PodAnalyzer
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ConstructorProvider)), Shared]
     public class ConstructorProvider : CodeFixProvider
     {
+        private readonly string nl = Environment.NewLine;
         private const string title = "Make properties getter only and generate constructor";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
@@ -109,9 +108,9 @@ namespace PodAnalyzer
             ParameterSyntax parm)
         {
             var exprStatement = (ExpressionStatementSyntax)SyntaxFactory
-                .ParseStatement($"{property.Identifier} = {parm.Identifier};\n")
+                .ParseStatement($"{property.Identifier} = {parm.Identifier};{nl}")
                 .NormalizeWhitespace(elasticTrivia: true)
-                .WithTrailingTrivia(SyntaxFactory.ParseTrailingTrivia("\n"));
+                .WithTrailingTrivia(SyntaxFactory.ParseTrailingTrivia(nl));
 
             return exprStatement;
         }
@@ -122,11 +121,11 @@ namespace PodAnalyzer
         {
             var leadingTrivia = typeDecl.GetLeadingTrivia();
             var parms = properties.Select(p => GenerateParameter(p).WithLeadingTrivia(leadingTrivia)).ToImmutableArray();
-            var separator = SyntaxFactory.ParseToken(",\n");
+            var separator = SyntaxFactory.ParseToken("," + nl);
             var separators = Enumerable.Repeat(separator, parms.Length - 1);
             var separatedList = SyntaxFactory.SeparatedList(parms, separators);
             
-            var parmsList = SyntaxFactory.ParameterList(SyntaxFactory.ParseToken("(\n"), separatedList, SyntaxFactory.Token(SyntaxKind.CloseParenToken));
+            var parmsList = SyntaxFactory.ParameterList(SyntaxFactory.ParseToken("(" + nl), separatedList, SyntaxFactory.Token(SyntaxKind.CloseParenToken));
 
             var statements = new ExpressionStatementSyntax[parms.Length];
             for (var i = 0; i < parms.Length; i++)

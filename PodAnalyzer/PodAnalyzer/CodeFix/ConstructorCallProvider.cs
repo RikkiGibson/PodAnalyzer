@@ -18,6 +18,7 @@ namespace PodAnalyzer
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ConstructorCallProvider)), Shared]
     public class ConstructorCallProvider : CodeFixProvider
     {
+        private readonly string nl = Environment.NewLine;
         private const string title = "Convert object initializer expression to constructor call";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
@@ -104,10 +105,10 @@ namespace PodAnalyzer
                 .Select(e => GenerateArgument(e).WithLeadingTrivia(leadingTrivia).WithoutTrailingTrivia())
                 .ToImmutableArray();
             
-            var separators = Enumerable.Repeat(SyntaxFactory.ParseToken(",\n"), args.Length - 1);
+            var separators = Enumerable.Repeat(SyntaxFactory.ParseToken("," + nl), args.Length - 1);
 
             var argList = SyntaxFactory.ArgumentList(
-                SyntaxFactory.ParseToken("(\n"),
+                SyntaxFactory.ParseToken("(" + nl),
                 SyntaxFactory.SeparatedList(args, separators),
                 SyntaxFactory.ParseToken(")"));
 
