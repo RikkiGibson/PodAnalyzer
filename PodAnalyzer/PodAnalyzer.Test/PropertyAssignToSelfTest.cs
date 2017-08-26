@@ -3,9 +3,11 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TestHelper;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace PodAnalyzer.Test
 {

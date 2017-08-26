@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace PodAnalyzer.Test
 {
@@ -34,7 +35,7 @@ namespace PodAnalyzer.Test
         {
             var path = Path.Combine(_resourceFolderPath, testFilename);
             var source = File.ReadAllText(path);
-
+            
             var document = _baseProject.AddDocument(name: testFilename, text: source, filePath: path);
 
             return document.Project;

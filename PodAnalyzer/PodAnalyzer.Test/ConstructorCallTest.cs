@@ -29,6 +29,13 @@ namespace PodAnalyzer.Test
             var newText = await newDocument.GetTextAsync();
             var newTextString = newText.ToString();
 
+            // It doesn't please me to do this, but Roslyn seems to be inserting \r\n uninvited.
+            // TODO: factor this out as a helper
+            if (Environment.NewLine == "\n")
+            {
+                newTextString = newTextString.Replace("\r\n", "\n");
+            }
+
             var expectedPath = Path.Combine(_resourceFolderPath, Path.ChangeExtension(baseFilename, ".out.cs"));
             var expectedText = File.ReadAllText(expectedPath);
             Assert.Equal(expectedText, newTextString);
