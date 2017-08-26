@@ -7,5 +7,5 @@ install:
   - mono .nuget/nuget.exe restore PodAnalyzer.sln -Verbosity detailed
   - mono .nuget/nuget.exe install xunit.runner.console -Version 2.2.0 -OutputDirectory ./src/packages
 script:
-  - xbuild /p:Configuration=Release PodAnalyzer.sln
+  - xbuild /p:Configuration=TravisCI PodAnalyzer.sln
   - mono .nuget/nuget.exe pack PodAnalyzer.nuspec -NoPackageAnalysis -OutputDirectory .
