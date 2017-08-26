@@ -1,11 +1,13 @@
 language: csharp
 before_install:
+  - mono --version
   - mkdir -p .nuget
   - wget -O .nuget/nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
-  - mono .nuget/nuget.exe # Output NuGet's version number
+  - mono .nuget/nuget.exe | head -1 # Output NuGet's version number
 install:
   - mono .nuget/nuget.exe restore PodAnalyzer.sln -Verbosity detailed
-  - mono .nuget/nuget.exe install xunit.runner.console -Version 2.2.0 -OutputDirectory ./src/packages
+  - mono .nuget/nuget.exe install xunit.runner.console -Version 2.2.0 -OutputDirectory ./testrunner
 script:
   - xbuild /p:Configuration=TravisCI PodAnalyzer.sln
-  - mono .nuget/nuget.exe pack PodAnalyzer.nuspec -NoPackageAnalysis -OutputDirectory .
+  - mono .nuget/nuget.exe pack PodAnalyzer/PodAnalyzer/PodAnalyzer.nuspec -NoPackageAnalysis -OutputDirectory .
+  - mono ./testrunner/xunit.runner.console.2.2.0/tools/xunit.console.x86.exe ./PodAnalyzer/PodAnalyzer.Test/bin/Release/PodAnalyzer.Test.dll
