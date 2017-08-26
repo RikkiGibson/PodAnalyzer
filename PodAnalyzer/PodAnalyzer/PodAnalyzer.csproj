@@ -117,12 +117,10 @@
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
-  <Target Name="AfterBuild">
+  <!-- <Target Name="AfterBuild">
     <GetAssemblyIdentity AssemblyFiles="$(OutDir)\$(AssemblyName).dll">
       <Output TaskParameter="Assemblies" ItemName="AnalyzerAssemblyInfo" />
     </GetAssemblyIdentity>
-    <Exec Command="&quot;$(SolutionDir)packages\NuGet.CommandLine.2.8.5\tools\NuGet.exe&quot; pack PodAnalyzer.nuspec -NoPackageAnalysis -Version %(AnalyzerAssemblyInfo.Version) -OutputDirectory ." WorkingDirectory="$(OutDir)" LogStandardErrorAsError="true" ConsoleToMSBuild="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
-    </Exec>
-  </Target>
+    <Exec Command="&quot;$(SolutionDir)packages\NuGet.CommandLine.2.8.5\tools\NuGet.exe&quot; pack PodAnalyzer.nuspec -NoPackageAnalysis -Version %(AnalyzerAssemblyInfo.Version) -OutputDirectory ." WorkingDirectory="$(OutDir)" LogStandardErrorAsError="true" />
+  </Target> -->
 </Project>

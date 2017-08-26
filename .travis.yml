@@ -1,2 +1,11 @@
 language: csharp
-solution: PodAnalyzer.sln
+before_install:
+  - mkdir -p .nuget
+  - wget -O .nuget/nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+  - mono .nuget/nuget.exe # Output NuGet's version number
+install:
+  - mono .nuget/nuget.exe restore PodAnalyzer.sln -Verbosity detailed
+  - mono .nuget/nuget.exe install xunit.runner.console -Version 2.2.0 -OutputDirectory ./src/packages
+script:
+  - xbuild /p:Configuration=Release PodAnalyzer.sln
+  - mono .nuget/nuget.exe pack PodAnalyzer.nuspec -NoPackageAnalysis -OutputDirectory .
