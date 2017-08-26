@@ -1,19 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PodAnalyzer", "PodAnalyzer\PodAnalyzer\PodAnalyzer.csproj", "{27C81499-5B84-42DA-A555-9909564A30AC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PodAnalyzer.Test", "PodAnalyzer\PodAnalyzer.Test\PodAnalyzer.Test.csproj", "{961AE1F1-4888-421F-A4B7-DCA13BD91191}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PodAnalyzer.Vsix", "PodAnalyzer\PodAnalyzer.Vsix\PodAnalyzer.Vsix.csproj", "{F74A6269-E496-4241-AC20-C62C2EEC9A41}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{55260631-76EA-434E-BA0B-B0AE8BB11897}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PodAnalyzer", "PodAnalyzer\PodAnalyzer\PodAnalyzer.csproj", "{27C81499-5B84-42DA-A555-9909564A30AC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PodAnalyzer.Test", "PodAnalyzer\PodAnalyzer.Test\PodAnalyzer.Test.csproj", "{961AE1F1-4888-421F-A4B7-DCA13BD91191}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PodAnalyzer.Vsix", "PodAnalyzer\PodAnalyzer.Vsix\PodAnalyzer.Vsix.csproj", "{F74A6269-E496-4241-AC20-C62C2EEC9A41}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +36,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F81484EE-9942-4EAA-97FC-0D1F11426533}
 	EndGlobalSection
 EndGlobal
