@@ -30,7 +30,7 @@ namespace PodAnalyzer
             context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
         }
 
-        private async void AnalyzeProperty(SymbolAnalysisContext context)
+        private void AnalyzeProperty(SymbolAnalysisContext context)
         {
             var property = (IPropertySymbol)context.Symbol;
             if (property.SetMethod != null)
@@ -38,7 +38,7 @@ namespace PodAnalyzer
                 return;
             }
 
-            if (!await IsAutoGetterPropertyAssigned(context, property))
+            if (!IsAutoGetterPropertyAssigned(context, property).Result)
             {
                 context.ReportDiagnostic(Diagnostic.Create(Rule, property.Locations[0], property.Name));
             }

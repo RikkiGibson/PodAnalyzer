@@ -30,7 +30,7 @@ namespace PodAnalyzer
             context.RegisterSymbolAction(AnalyzeNamedType, SymbolKind.NamedType);
         }
 
-        private static async void AnalyzeNamedType(SymbolAnalysisContext context)
+        private static void AnalyzeNamedType(SymbolAnalysisContext context)
         {
             var symbol = (INamedTypeSymbol)context.Symbol;
             foreach (var ctorSymbol in symbol.InstanceConstructors)
@@ -41,7 +41,7 @@ namespace PodAnalyzer
                     continue;
                 }
 
-                var ctorSyntax = (ConstructorDeclarationSyntax)await syntaxRefs[0].GetSyntaxAsync();
+                var ctorSyntax = (ConstructorDeclarationSyntax) syntaxRefs[0].GetSyntax();
                 foreach (var parm in ctorSymbol.Parameters)
                 {
                     if (!IsConstructorReferencingParam(context, parm, ctorSyntax))
