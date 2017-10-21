@@ -6,8 +6,8 @@ before_install:
   - mono .nuget/nuget.exe | head -1 # Output NuGet's version number
 install:
   - mono .nuget/nuget.exe restore PodAnalyzer.sln -Verbosity detailed
-  - mono .nuget/nuget.exe install xunit.runner.console -Version 2.2.0 -OutputDirectory ./testrunner
+  - mono .nuget/nuget.exe install xunit.runner.console -Version 2.3.0 -OutputDirectory ./testrunner
 script:
   - msbuild /p:Configuration=TravisCI PodAnalyzer.sln
   - mono .nuget/nuget.exe pack src/PodAnalyzer/PodAnalyzer.nuspec -NoPackageAnalysis -OutputDirectory .
-  - mono ./testrunner/xunit.runner.console.2.2.0/tools/xunit.console.x86.exe ./src/PodAnalyzer.Test/bin/Release/PodAnalyzer.Test.dll
+  - mono ./testrunner/xunit.runner.console.2.3.0/tools/net452/xunit.console.x86.exe ./src/PodAnalyzer.Test/bin/Release/PodAnalyzer.Test.dll
