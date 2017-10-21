@@ -18,7 +18,7 @@ namespace PodAnalyzer.Test
 
         private readonly CodeFixTester _codeFixTester = new CodeFixTester(new ConstructorProvider());
         
-        public async Task TestCodeFix(string baseFilename)
+        async Task TestCodeFix(string baseFilename)
         {
             var filename = Path.ChangeExtension(baseFilename, ".cs");
             var project = _analyzerTester.CreateTestProject(filename);
