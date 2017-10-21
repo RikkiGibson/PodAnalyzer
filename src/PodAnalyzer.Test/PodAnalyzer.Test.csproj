@@ -180,6 +180,7 @@
     </None>
     <Compile Include="CodeFixTester.cs" />
     <Compile Include="ConstructorCallTest.cs" />
+    <Compile Include="ConstructorParameterNeverAssignedTest.cs" />
     <Compile Include="ConstructorTest.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
@@ -196,6 +197,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Resources\CodeFix\ConstructorCall.out.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\Analyzer\ConstructorInitializer.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="Verifiers\CodeFixVerifier.cs" />

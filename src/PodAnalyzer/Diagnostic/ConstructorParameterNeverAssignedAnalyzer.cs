@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ConstructorParameterNeverAssignedAnalyzer : DiagnosticAnalyzer
     {
-        private static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor Rule =
             new DiagnosticDescriptor(id: "POD004",
                 title: new LocalizableResourceString(nameof(Resources.POD004Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD004MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -59,6 +59,7 @@ namespace PodAnalyzer
         {
             var isReferencingParam = ctorSyntax.Body
                 .DescendantNodes()
+                .Concat(ctorSyntax.Initializer.ArgumentList.DescendantNodes())
                 .OfType<IdentifierNameSyntax>()
                 .Any(idSyntax => IsIdentifierReferencingParam(context, idSyntax, param));
 
