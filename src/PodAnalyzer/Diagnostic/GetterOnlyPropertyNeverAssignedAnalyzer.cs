@@ -27,6 +27,8 @@ namespace PodAnalyzer
 
         public override void Initialize(AnalysisContext context)
         {
+            context.EnableConcurrentExecution();
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
         }
 
