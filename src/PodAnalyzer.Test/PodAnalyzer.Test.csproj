@@ -179,9 +179,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="CodeFixTester.cs" />
-    <Compile Include="ConstructorCallTest.cs" />
-    <Compile Include="ConstructorParameterNeverAssignedTest.cs" />
-    <Compile Include="ConstructorTest.cs" />
+    <Compile Include="CodeFix\ConstructorCallTest.cs" />
+    <Compile Include="Analyzer\ConstructorParameterNeverAssignedTest.cs" />
+    <Compile Include="CodeFix\ConstructorTest.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>
@@ -207,7 +207,7 @@
     <Compile Include="Helpers\CodeFixVerifier.Helper.cs" />
     <Compile Include="Helpers\DiagnosticResult.cs" />
     <Compile Include="Helpers\DiagnosticVerifier.Helper.cs" />
-    <Compile Include="PropertyAssignToSelfTest.cs" />
+    <Compile Include="Analyzer\PropertyAssignToSelfTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
