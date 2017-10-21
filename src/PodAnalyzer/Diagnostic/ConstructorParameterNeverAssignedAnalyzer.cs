@@ -61,7 +61,7 @@ namespace PodAnalyzer
         {
             var isReferencingParam = ctorSyntax.Body
                 .DescendantNodes()
-                .Concat(ctorSyntax.Initializer.ArgumentList.DescendantNodes())
+                .Concat(ctorSyntax.Initializer?.ArgumentList.DescendantNodes() ?? Enumerable.Empty<SyntaxNode>())
                 .OfType<IdentifierNameSyntax>()
                 .Any(idSyntax => IsIdentifierReferencingParam(context, idSyntax, param));
 
