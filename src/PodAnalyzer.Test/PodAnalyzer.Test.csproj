@@ -178,6 +178,7 @@
     <None Include="Resources\CodeFix\Test1.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Compile Include="Analyzer\GetterPropertyNeverAssignedTest.cs" />
     <Compile Include="CodeFixTester.cs" />
     <Compile Include="CodeFix\ConstructorCallTest.cs" />
     <Compile Include="Analyzer\ConstructorParameterNeverAssignedTest.cs" />
@@ -200,6 +201,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Resources\Analyzer\ConstructorInitializer.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\Analyzer\ArrowProperty.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Compile Include="Verifiers\CodeFixVerifier.cs" />

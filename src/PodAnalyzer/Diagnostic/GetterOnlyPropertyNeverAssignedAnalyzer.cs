@@ -34,41 +34,53 @@ namespace PodAnalyzer
 
         private void AnalyzeProperty(SymbolAnalysisContext context)
         {
-            var property = (IPropertySymbol)context.Symbol;
-            if (property.SetMethod != null)
+            try
             {
-                return;
-            }
+                var property = (IPropertySymbol)context.Symbol;
+                if (property.SetMethod != null)
+                {
+                    return;
+                }
 
-            if (!IsAutoGetterPropertyAssigned(context, property).Result)
+                if (!IsAutoGetterPropertyAssigned(context, property))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Rule, property.Locations[0], property.Name));
+                }
+            }
+            catch (NullReferenceException e)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rule, property.Locations[0], property.Name));
+                throw new Exception(e.StackTrace.Replace("\r\n", " - "));
+            }
+            catch (AggregateException e)
+            {
+                throw new InvalidOperationException(e.StackTrace.Replace("\r\n", " - "), e.InnerException);
             }
         }
 
-        private static async Task<bool> IsAutoGetterPropertyAssigned(SymbolAnalysisContext context, IPropertySymbol property)
+        private static bool IsAutoGetterPropertyAssigned(SymbolAnalysisContext context, IPropertySymbol property)
         {
             foreach (var syntaxRef in property.DeclaringSyntaxReferences)
             {
-                var propertySyntax = (PropertyDeclarationSyntax)await syntaxRef.GetSyntaxAsync();
+                var propertySyntax = (PropertyDeclarationSyntax)syntaxRef.GetSyntax();
                 if (propertySyntax.Initializer != null)
                 {
                     return true;
                 }
                 
+                // A null accessor list indicates an expression-bodied property
                 // If accessor body is non-null, this is a computed property, not an auto property
-                if (propertySyntax.AccessorList.Accessors.Any(a => a.Body != null))
+                if (propertySyntax.AccessorList == null ||
+                    propertySyntax.AccessorList.Accessors.Any(a => a.Body != null))
                 {
                     return true;
                 }
             }
-
-            var ctors = property.ContainingType.InstanceConstructors;
+            
             foreach (var ctorSymbol in property.ContainingType.InstanceConstructors)
             {
                 foreach (var syntaxRef in ctorSymbol.DeclaringSyntaxReferences)
                 {
-                    var ctorSyntax = (ConstructorDeclarationSyntax)await syntaxRef.GetSyntaxAsync();
+                    var ctorSyntax = (ConstructorDeclarationSyntax)syntaxRef.GetSyntax();
                     var assignments = ctorSyntax.Body.DescendantNodes().OfType<AssignmentExpressionSyntax>();
                     foreach (var assignment in assignments)
                     {
