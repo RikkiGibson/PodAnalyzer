@@ -80,10 +80,9 @@ namespace PodAnalyzer
         {
             var idString = ((IdentifierNameSyntax)assignment.Left).Identifier.Text;
             var newIdString = idString.Substring(0, 1).ToLower() + idString.Substring(1);
-            var newIdSyntax = SyntaxFactory.IdentifierName(newIdString);
             var arg = SyntaxFactory.Argument(
                 nameColon: SyntaxFactory.NameColon(newIdString),
-                refOrOutKeyword: SyntaxFactory.Token(SyntaxKind.None),
+                refKindKeyword: SyntaxFactory.Token(SyntaxKind.None),
                 expression: assignment.Right);
 
             return arg;
