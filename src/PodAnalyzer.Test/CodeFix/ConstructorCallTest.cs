@@ -1,60 +1,82 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Diagnostics;
 using Xunit;
-
-using Verify = Microsoft.CodeAnalysis.CSharp.Testing.XUnit.CodeFixVerifier<
-    PodAnalyzer.GetterPropertyNeverAssignedAnalyzer,
-    PodAnalyzer.ConstructorCallProvider>;
+using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
+using static PodAnalyzer.Test.TestUtilities;
+using Microsoft.CodeAnalysis;
+using System.Collections.Immutable;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Testing;
+using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace PodAnalyzer.Test
 {
-    public class ConstructorCallTest
+#pragma warning disable RS1001
+    public class NoOpAnalyzer : DiagnosticAnalyzer
+#pragma warning restore RS1001
     {
-        const string _resourceFolderPath = "Resources/CodeFix";
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray<DiagnosticDescriptor>.Empty;
 
-        private readonly AnalyzerTester _analyzerTester = new AnalyzerTester(
-            resourceFolderPath: _resourceFolderPath,
-            analyzer: new TypeCanBeImmutableAnalyzer());
-
-        private readonly CodeFixTester _codeFixTester = new CodeFixTester(new ConstructorCallProvider());
-        
-        async Task TestCodeFix(string baseFilename)
+        public override void Initialize(AnalysisContext context)
         {
-            var filename = Path.ChangeExtension(baseFilename, ".cs");
-            var project = _analyzerTester.CreateTestProject(filename);
-            var diagnostics = await _analyzerTester.ComputeDiagnostics(project: project);
-            var actions = await _codeFixTester.CreateCodeActionsAsync(project.Documents.First(), diagnostics);
-            var newDocument = await _codeFixTester.ApplyFixAsync(project.Documents.First(), actions.First());
-
-            var newText = await newDocument.GetTextAsync();
-            var newTextString = newText.ToString();
-
-            // It doesn't please me to do this, but Roslyn seems to be inserting \r\n uninvited.
-            // TODO: factor this out as a helper
-            if (Environment.NewLine == "\n")
-            {
-                newTextString = newTextString.Replace("\r\n", "\n");
-            }
-
-            var expectedPath = Path.Combine(_resourceFolderPath, Path.ChangeExtension(baseFilename, ".out.cs"));
-            var expectedText = File.ReadAllText(expectedPath);
-            Assert.Equal(expectedText, newTextString);
         }
+    }
 
+    public class ConstructorCallTest : CodeFixVerifier<NoOpAnalyzer, ConstructorCallProvider>
+    {
         [Fact]
-        public Task SimpleTest() => TestCodeFix("ConstructorCall");
-
-        [Fact]
-        public Task SimpleTest1()
+        public Task MultipleProperties()
         {
-            return Task.CompletedTask;
-            //Verify.VerifyAnalyzerAsync
-            //T.Verifiers.XUnitVerifier
+            var classDecl = @"
+public class Pod
+{
+    public string P1 { get; }
+    public string P2 { get; }
+
+    public Pod(string p1, string p2)
+    {
+        P1 = p1;
+        P2 = p2;
+    }
+}
+";
+
+            var beforeSource = classDecl + @"
+static class C
+{
+    static void Test()
+    {
+        new Pod
+        {
+            P1 = ""hello"",
+            P2 = ""world""
+        };
+    }
+}";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(18, 13).WithArguments("p1", "Pod.Pod(string, string)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(20, 13).WithArguments("Pod.P1"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(21, 13).WithArguments("Pod.P2"),
+            };
+
+            var afterSource = classDecl + @"
+static class C
+{
+    static void Test()
+    {
+        new Pod(
+            p1: ""hello"",
+            p2: ""world""
+        );
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
         }
     }
 }
