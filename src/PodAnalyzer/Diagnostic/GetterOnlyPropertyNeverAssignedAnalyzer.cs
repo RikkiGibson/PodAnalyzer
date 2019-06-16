@@ -8,13 +8,14 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace PodAnalyzer
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class GetterPropertyNeverAssignedAnalyzer : DiagnosticAnalyzer
     {
-        internal static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor POD002 =
             new DiagnosticDescriptor(id: "POD002",
                 title: new LocalizableResourceString(nameof(Resources.POD002Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD002MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -23,7 +24,7 @@ namespace PodAnalyzer
                 isEnabledByDefault: true,
                 description: new LocalizableResourceString(nameof(Resources.POD002Description), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(POD002); } }
 
         public override void Initialize(AnalysisContext context)
         {
@@ -44,7 +45,7 @@ namespace PodAnalyzer
 
                 if (!IsAutoGetterPropertyAssigned(context, property))
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Rule, property.Locations[0], property.Name));
+                    context.ReportDiagnostic(Diagnostic.Create(POD002, property.Locations[0], property.Name));
                 }
             }
             catch (NullReferenceException e)
@@ -59,41 +60,59 @@ namespace PodAnalyzer
 
         private static bool IsAutoGetterPropertyAssigned(SymbolAnalysisContext context, IPropertySymbol property)
         {
-            foreach (var syntaxRef in property.DeclaringSyntaxReferences)
+            Debug.Assert(!property.IsImplicitlyDeclared);
+            var propertySyntax = (PropertyDeclarationSyntax)property.DeclaringSyntaxReferences.First().GetSyntax();
+            if (propertySyntax.Initializer != null)
             {
-                var propertySyntax = (PropertyDeclarationSyntax)syntaxRef.GetSyntax();
-                if (propertySyntax.Initializer != null)
-                {
-                    return true;
-                }
-                
-                // A null accessor list indicates an expression-bodied property
-                // If accessor body is non-null, this is a computed property, not an auto property
-                if (propertySyntax.AccessorList == null ||
-                    propertySyntax.AccessorList.Accessors.Any(a => a.Body != null))
-                {
-                    return true;
-                }
+                return true;
             }
-            
+                
+                
+            if (// A null accessor list indicates an expression-bodied property
+                propertySyntax.AccessorList == null ||
+                // If accessor body is non-null, this is a computed property, not an auto property
+                propertySyntax.AccessorList.Accessors.Any(a => a.Body != null))
+            {
+                return true;
+            }
+
+            // if any constructor exists which does not assign the property (including implicit constructor), return false
             foreach (var ctorSymbol in property.ContainingType.InstanceConstructors)
             {
-                foreach (var syntaxRef in ctorSymbol.DeclaringSyntaxReferences)
+                Debug.Assert(ctorSymbol.DeclaringSyntaxReferences.Length <= 1);
+                var ctorSyntax = ctorSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as ConstructorDeclarationSyntax;
+                if (ctorSyntax == null)
                 {
-                    var ctorSyntax = (ConstructorDeclarationSyntax)syntaxRef.GetSyntax();
-                    var assignments = ctorSyntax.Body.DescendantNodes().OfType<AssignmentExpressionSyntax>();
-                    foreach (var assignment in assignments)
+                    // implicit constructor
+                    return false;
+                }
+
+                if (ctorSyntax.Initializer != null && ctorSyntax.Initializer.ThisOrBaseKeyword.Kind() == SyntaxKind.ThisKeyword)
+                {
+                    // If the constructor calls out to another constructor in the same class, rely on the other constructor to initialize
+                    // (if the other constructor doesn't initialize, we'll warn anyway)
+                    return true;
+                }
+
+                var isAssigned = false;
+                var assignments = ctorSyntax.Body.DescendantNodes().OfType<AssignmentExpressionSyntax>();
+                foreach (var assignment in assignments)
+                {
+                    var symbol = context.Compilation.GetSemanticModel(ctorSyntax.SyntaxTree).GetSymbolInfo(assignment.Left);
+                    if (property.Equals(symbol.Symbol))
                     {
-                        var symbol = context.Compilation.GetSemanticModel(ctorSyntax.SyntaxTree).GetSymbolInfo(assignment.Left);
-                        if (property.Equals(symbol.Symbol))
-                        {
-                            return true;
-                        }
+                        isAssigned = true;
+                        break;
                     }
+                }
+
+                if (!isAssigned)
+                {
+                    return false;
                 }
             }
 
-            return false;
+            return true;
         }
     }
 }

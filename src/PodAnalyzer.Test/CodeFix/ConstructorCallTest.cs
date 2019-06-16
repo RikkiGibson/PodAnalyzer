@@ -4,7 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Xunit;
+
+using Verify = Microsoft.CodeAnalysis.CSharp.Testing.XUnit.CodeFixVerifier<
+    PodAnalyzer.GetterPropertyNeverAssignedAnalyzer,
+    PodAnalyzer.ConstructorCallProvider>;
 
 namespace PodAnalyzer.Test
 {
@@ -43,5 +48,13 @@ namespace PodAnalyzer.Test
 
         [Fact]
         public Task SimpleTest() => TestCodeFix("ConstructorCall");
+
+        [Fact]
+        public Task SimpleTest1()
+        {
+            return Task.CompletedTask;
+            //Verify.VerifyAnalyzerAsync
+            //T.Verifiers.XUnitVerifier
+        }
     }
 }

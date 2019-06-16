@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ConstructorParameterNeverAssignedAnalyzer : DiagnosticAnalyzer
     {
-        public static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor POD004 =
             new DiagnosticDescriptor(id: "POD004",
                 title: new LocalizableResourceString(nameof(Resources.POD004Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD004MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -23,7 +23,7 @@ namespace PodAnalyzer
                 isEnabledByDefault: true,
                 description: new LocalizableResourceString(nameof(Resources.POD004Description), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(POD004); } }
 
         public override void Initialize(AnalysisContext context)
         {
@@ -48,7 +48,7 @@ namespace PodAnalyzer
                 {
                     if (!IsConstructorReferencingParam(context, parm, ctorSyntax))
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(Rule, parm.Locations[0], parm.Name));
+                        context.ReportDiagnostic(Diagnostic.Create(POD004, parm.Locations[0], parm.Name));
                     }
                 }
             }
