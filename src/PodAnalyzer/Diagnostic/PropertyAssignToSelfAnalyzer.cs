@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class PropertyAssignToSelfAnalyzer : DiagnosticAnalyzer
     {
-        public static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor POD001 =
             new DiagnosticDescriptor(id: "POD001",
                 title: new LocalizableResourceString(nameof(Resources.POD001Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD001MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -23,7 +23,7 @@ namespace PodAnalyzer
                 isEnabledByDefault: true,
                 description: new LocalizableResourceString(nameof(Resources.POD001Description), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(POD001); } }
 
         public override void Initialize(AnalysisContext context)
         {
@@ -34,8 +34,14 @@ namespace PodAnalyzer
 
         private static void AnalyzeConstructor(SyntaxNodeAnalysisContext context)
         {
-            var assignments = ((ConstructorDeclarationSyntax)context.Node)
-                .Body
+            var ctorSyntax = (ConstructorDeclarationSyntax)context.Node;
+            if (ctorSyntax.Body == null && ctorSyntax.ExpressionBody == null)
+            {
+                // nothing to analyze
+                return;
+            }
+
+            var assignments = ((SyntaxNode)ctorSyntax.Body ?? ctorSyntax.ExpressionBody)
                 .DescendantNodes()
                 .OfType<AssignmentExpressionSyntax>()
                 .Where(n => IsPropertyAssignToSelf(context, n));
@@ -43,7 +49,7 @@ namespace PodAnalyzer
             foreach (var node in assignments)
             {
                 var propertyName = node.Left.ToString();
-                var diagnostic = Diagnostic.Create(Rule, node.GetLocation(), propertyName);
+                var diagnostic = Diagnostic.Create(POD001, node.GetLocation(), propertyName);
                 context.ReportDiagnostic(diagnostic);
             }
         }

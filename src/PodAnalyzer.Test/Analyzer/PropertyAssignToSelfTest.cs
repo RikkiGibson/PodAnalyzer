@@ -1,28 +1,61 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.Diagnostics;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading.Tasks;
-using TestHelper;
 using Xunit;
-using Xunit.Abstractions;
+using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
+using static PodAnalyzer.Test.TestUtilities;
+using Microsoft.CodeAnalysis.Testing;
+using Microsoft.CodeAnalysis;
 
 namespace PodAnalyzer.Test
 {
-    public class PropertyAssignToSelfTest
+    public class PropertyAssignToSelfTest : AnalyzerVerifier<PropertyAssignToSelfAnalyzer>
     {
-        static readonly AnalyzerTester tester = new AnalyzerTester(
-            resourceFolderPath: "Resources/Analyzer",
-            analyzer: new PropertyAssignToSelfAnalyzer());
+        [Fact]
+        public Task PropertyAssignToSelf_Warns()
+        {
+            var source = @"
+class C
+{
+    string P { get; }
+    C()
+    {
+        P = P;
+    }
+}
+";
+            return VerifyAnalyzerAsync(source,
+                // Test0.cs(7,9): warning POD001: Property 'P' is assigned to itself
+                GetCSharpResultAt(7, 9, PropertyAssignToSelfAnalyzer.POD001, "P"));
+        }
 
         [Fact]
-        public async Task Test()
+        public Task PropertyAssignToSelf_ExpressionBody_Warns()
         {
-            var project = tester.CreateTestProject("Test1.cs");
-            var diags = (await tester.ComputeDiagnostics(project: project)).Count(d => d.Id == PropertyAssignToSelfAnalyzer.Rule.Id);
-            Assert.Equal(1, diags);
+            var source = @"
+class C
+{
+    string P { get; }
+    C() => P = P;
+}
+";
+            return VerifyAnalyzerAsync(source,
+                // Test0.cs(5,12): warning POD001: Property 'P' is assigned to itself
+                GetCSharpResultAt(5, 12, PropertyAssignToSelfAnalyzer.POD001, "P"));
+        }
+
+        [Fact]
+        public Task ExternConstructor_NoWarning_NoCrash()
+        {
+            var source = @"
+class C
+{
+    extern C();
+}
+";
+            return VerifyAnalyzerAsync(source);
         }
     }
 }

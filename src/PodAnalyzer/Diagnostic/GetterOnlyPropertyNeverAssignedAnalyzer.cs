@@ -87,6 +87,13 @@ namespace PodAnalyzer
                     return false;
                 }
 
+                var bodyOpt = (SyntaxNode)ctorSyntax.Body ?? ctorSyntax.ExpressionBody;
+                if (bodyOpt == null)
+                {
+                    // don't check extern constructors
+                    continue;
+                }
+
                 if (ctorSyntax.Initializer != null && ctorSyntax.Initializer.ThisOrBaseKeyword.Kind() == SyntaxKind.ThisKeyword)
                 {
                     // If the constructor calls out to another constructor in the same class, rely on the other constructor to initialize
@@ -95,7 +102,7 @@ namespace PodAnalyzer
                 }
 
                 var isAssigned = false;
-                var assignments = ctorSyntax.Body.DescendantNodes().OfType<AssignmentExpressionSyntax>();
+                var assignments = bodyOpt.DescendantNodes().OfType<AssignmentExpressionSyntax>();
                 foreach (var assignment in assignments)
                 {
                     var symbol = context.Compilation.GetSemanticModel(ctorSyntax.SyntaxTree).GetSymbolInfo(assignment.Left);

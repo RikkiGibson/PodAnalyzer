@@ -44,6 +44,12 @@ namespace PodAnalyzer
                 }
 
                 var ctorSyntax = (ConstructorDeclarationSyntax) syntaxRefs[0].GetSyntax();
+                if (ctorSyntax.Body == null && ctorSyntax.ExpressionBody == null)
+                {
+                    // nothing to analyze if constructor has no body
+                    continue;
+                }
+
                 foreach (var parm in ctorSymbol.Parameters)
                 {
                     if (!IsConstructorReferencingParam(context, parm, ctorSyntax))
@@ -59,7 +65,8 @@ namespace PodAnalyzer
             IParameterSymbol param,
             ConstructorDeclarationSyntax ctorSyntax)
         {
-            var isReferencingParam = ctorSyntax.Body
+
+            var isReferencingParam = ((SyntaxNode)ctorSyntax.Body ?? ctorSyntax.ExpressionBody)
                 .DescendantNodes()
                 .Concat(ctorSyntax.Initializer?.ArgumentList.DescendantNodes() ?? Enumerable.Empty<SyntaxNode>())
                 .OfType<IdentifierNameSyntax>()

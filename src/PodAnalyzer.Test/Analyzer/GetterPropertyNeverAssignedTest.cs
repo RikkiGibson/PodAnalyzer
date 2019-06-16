@@ -38,6 +38,48 @@ class C
         }
 
         [Fact]
+        public Task GetterOnlyAutoProperty_WithConstructor_NoWarning()
+        {
+            var source = @"
+class C
+{
+    int P { get; }
+    C(int p)
+    {
+        P = P;
+    }
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
+        public Task GetterOnlyAutoProperty_ExternConstructor_NoWarning()
+        {
+            var source = @"
+class C
+{
+    int P { get; }
+    extern C();
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
+        public Task GetterOnlyAutoProperty_ExpressionBodyConstructor_NoWarning()
+        {
+            var source = @"
+class C
+{
+    int P { get; }
+    C(int p) => P = P;
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
         public Task GetterOnlyAutoProperty_WithConstructor_Warns()
         {
             var source = @"

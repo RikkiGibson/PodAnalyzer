@@ -26,6 +26,18 @@ public class A
         }
 
         [Fact]
+        public Task ExternConstructor_NoWarning()
+        {
+            var source = @"
+class A
+{
+    extern A(int x);
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
         public Task UnusedParam_Warns()
         {
             var source = @"
