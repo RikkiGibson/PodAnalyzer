@@ -10,20 +10,17 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
 
 namespace PodAnalyzer
 {
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ConstructorCallProvider)), Shared]
     public class ConstructorCallProvider : CodeFixProvider
     {
-        private readonly string nl = Environment.NewLine;
         private const string title = "Convert object initializer expression to constructor call";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create("CS7036"); }
+            get { return ImmutableArray.Create("CS7036", "CS0200"); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -53,7 +50,7 @@ namespace PodAnalyzer
             {
                 return;
             }
-            
+
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: title,
@@ -78,12 +75,21 @@ namespace PodAnalyzer
 
         private static ArgumentSyntax GenerateArgument(AssignmentExpressionSyntax assignment)
         {
-            var idString = ((IdentifierNameSyntax)assignment.Left).Identifier.Text;
+            var identifier = ((IdentifierNameSyntax)assignment.Left).Identifier;
+            var idString = identifier.Text;
             var newIdString = idString.Substring(0, 1).ToLower() + idString.Substring(1);
+
+            var rightTrivia = assignment.Right.GetTrailingTrivia();
+
+            // Handle case `new Obj { Prop = expr };` -> new Obj(prop: expr);`
+            var assignmentRight = rightTrivia.ToFullString() == " " ? assignment.Right.WithoutTrailingTrivia() : assignment.Right;
+
             var arg = SyntaxFactory.Argument(
-                nameColon: SyntaxFactory.NameColon(newIdString),
+                nameColon: SyntaxFactory.NameColon(newIdString)
+                    .WithLeadingTrivia(identifier.LeadingTrivia)
+                    .WithTrailingTrivia(assignment.OperatorToken.TrailingTrivia),
                 refKindKeyword: SyntaxFactory.Token(SyntaxKind.None),
-                expression: assignment.Right);
+                expression: assignmentRight);
 
             return arg;
         }
@@ -93,26 +99,20 @@ namespace PodAnalyzer
             ObjectCreationExpressionSyntax creationExpression,
             CancellationToken cancellationToken)
         {
-            var leadingTrivia = creationExpression.Ancestors()
-                .OfType<StatementSyntax>()
-                .First()
-                .GetLeadingTrivia()
-                .AddRange(SyntaxFactory.ParseLeadingTrivia("    "));
-
-            var args = creationExpression.Initializer.Expressions
+            var initializer = creationExpression.Initializer;
+            var args = initializer.Expressions
                 .OfType<AssignmentExpressionSyntax>()
-                .Select(e => GenerateArgument(e).WithLeadingTrivia(leadingTrivia).WithoutTrailingTrivia())
+                .Select(e => GenerateArgument(e))
                 .ToImmutableArray();
-            
-            var separators = Enumerable.Repeat(SyntaxFactory.ParseToken("," + nl), args.Length - 1);
 
             var argList = SyntaxFactory.ArgumentList(
-                SyntaxFactory.ParseToken("(" + nl),
-                SyntaxFactory.SeparatedList(args, separators),
-                SyntaxFactory.ParseToken(")"));
+                SyntaxFactory.Token(SyntaxKind.OpenParenToken).WithTrailingTrivia(initializer.OpenBraceToken.TrailingTrivia),
+                SyntaxFactory.SeparatedList(args, initializer.Expressions.GetSeparators()),
+                SyntaxFactory.Token(SyntaxKind.CloseParenToken).WithTriviaFrom(initializer.CloseBraceToken));
 
             var newCreation = SyntaxFactory
-                .ObjectCreationExpression(creationExpression.Type.WithTrailingTrivia(), argList, null);
+                .ObjectCreationExpression(creationExpression.NewKeyword, creationExpression.Type.WithoutTrailingTrivia(), argList, initializer: null)
+                .WithTriviaFrom(creationExpression);
 
             var root = await document.GetSyntaxRootAsync(cancellationToken);
             var newRoot = root.ReplaceNode(creationExpression, newCreation);

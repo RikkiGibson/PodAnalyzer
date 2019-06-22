@@ -27,10 +27,7 @@ namespace PodAnalyzer.Test
 
     public class ConstructorCallTest : CodeFixVerifier<NoOpAnalyzer, ConstructorCallProvider>
     {
-        [Fact]
-        public Task MultipleProperties()
-        {
-            var classDecl = @"
+        private const string multiplePropertiesClassDecl = @"
 public class Pod
 {
     public string P1 { get; }
@@ -44,7 +41,10 @@ public class Pod
 }
 ";
 
-            var beforeSource = classDecl + @"
+        [Fact]
+        public Task MultipleProperties_Local()
+        {
+            var beforeSource = multiplePropertiesClassDecl + @"
 static class C
 {
     static void Test()
@@ -55,7 +55,8 @@ static class C
             P2 = ""world""
         };
     }
-}";
+}
+";
 
             var expectedDiagnostics = new[]
             {
@@ -64,7 +65,7 @@ static class C
                 new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(21, 13).WithArguments("Pod.P2"),
             };
 
-            var afterSource = classDecl + @"
+            var afterSource = multiplePropertiesClassDecl + @"
 static class C
 {
     static void Test()
@@ -74,6 +75,155 @@ static class C
             p2: ""world""
         );
     }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
+        public Task MultipleProperties_Local_NestedBlock()
+        {
+            var beforeSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static void Test()
+    {
+        if (true)
+        {
+            var p = new Pod
+            {
+                P1 = ""hello"",
+                P2 = ""world""
+            };
+        }
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(20, 25).WithArguments("p1", "Pod.Pod(string, string)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(22, 17).WithArguments("Pod.P1"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(23, 17).WithArguments("Pod.P2"),
+            };
+
+            var afterSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static void Test()
+    {
+        if (true)
+        {
+            var p = new Pod(
+                p1: ""hello"",
+                p2: ""world""
+            );
+        }
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
+        public Task MultipleProperties_Local_NestedExpression()
+        {
+            var beforeSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static void Test()
+    {
+        Pod p = new Pod(""already"", ""good"");
+        if (p.Equals(new Pod { P1 = ""not"", P2 = ""yet"" }))
+        {
+        }
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(19, 26).WithArguments("p1", "Pod.Pod(string, string)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(19, 32).WithArguments("Pod.P1"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(19, 44).WithArguments("Pod.P2"),
+            };
+
+            var afterSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static void Test()
+    {
+        Pod p = new Pod(""already"", ""good"");
+        if (p.Equals(new Pod(p1: ""not"", p2: ""yet"")))
+        {
+        }
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
+        public Task MultipleProperties_Field()
+        {
+            var beforeSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static Pod p = new Pod
+    {
+        P1 = ""hello"",
+        P2 = ""world""
+    };
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(16, 24).WithArguments("p1", "Pod.Pod(string, string)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(18, 9).WithArguments("Pod.P1"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(19, 9).WithArguments("Pod.P2"),
+            };
+
+            var afterSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static Pod p = new Pod(
+        p1: ""hello"",
+        p2: ""world""
+    );
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
+        public Task MultipleProperties_Comments()
+        {
+            var beforeSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static Pod p = /* here it comes: */ new /* */ Pod // comment
+    { // comment
+        P1 = ""hello"" /* comment */, // TODO: think of a better value
+        P2 /* :( */ = /* :) */ ""world""
+    } /* comment */; // end of statement
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(16, 51).WithArguments("p1", "Pod.Pod(string, string)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(18, 9).WithArguments("Pod.P1"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(19, 9).WithArguments("Pod.P2"),
+            };
+
+            var afterSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static Pod p = /* here it comes: */ new /* */ Pod( // comment
+        p1: ""hello"" /* comment */, // TODO: think of a better value
+        p2: /* :) */ ""world""
+    ) /* comment */; // end of statement
 }
 ";
             return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
