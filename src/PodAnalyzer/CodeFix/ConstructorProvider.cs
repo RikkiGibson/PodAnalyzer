@@ -39,7 +39,7 @@ namespace PodAnalyzer
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().First();
+            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
@@ -74,7 +74,7 @@ namespace PodAnalyzer
             return newProperty;
         }
 
-        private SyntaxList<MemberDeclarationSyntax> RewriteMembers(ClassDeclarationSyntax typeDecl)
+        private SyntaxList<MemberDeclarationSyntax> RewriteMembers(TypeDeclarationSyntax typeDecl)
         {
             var members = typeDecl.Members;
             var membersSize = members.Count + 1;
@@ -140,7 +140,7 @@ namespace PodAnalyzer
             return exprStatement;
         }
 
-        private ConstructorDeclarationSyntax GenerateConstructor(ClassDeclarationSyntax typeDecl)
+        private ConstructorDeclarationSyntax GenerateConstructor(TypeDeclarationSyntax typeDecl)
         {
             var properties = typeDecl.Members
                 .OfType<PropertyDeclarationSyntax>()
@@ -178,7 +178,7 @@ namespace PodAnalyzer
             return ctor;
         }
 
-        private async Task<Solution> MakeImmutableAsync(Document document, ClassDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Solution> MakeImmutableAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
             var newTypeDecl = typeDecl
                 .WithMembers(RewriteMembers(typeDecl));

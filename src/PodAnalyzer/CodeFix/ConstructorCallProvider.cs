@@ -46,7 +46,7 @@ namespace PodAnalyzer
 
             var semanticModel = await context.Document.GetSemanticModelAsync();
             var assignments = objectCreation.Initializer.Expressions.OfType<AssignmentExpressionSyntax>();
-            var hasAssignToGetterOnly = assignments.Any(a => IsAssignToGetterOnlyProperty(semanticModel, a));
+            var hasAssignToGetterOnly = assignments.All(a => IsAssignToGetterOnlyProperty(semanticModel, a));
             if (!hasAssignToGetterOnly)
             {
                 return;
@@ -69,7 +69,7 @@ namespace PodAnalyzer
                 return false;
             }
 
-            // TODO: how can you really tell if it's a getter-only auto prop? Auto props are syntax sugar.
+            // todo: do we need to validate that a constructor exists with a corresponding parameter for this property?
             var hasConstructor = symbol.ContainingType.InstanceConstructors.Any();
             return hasConstructor;
         }

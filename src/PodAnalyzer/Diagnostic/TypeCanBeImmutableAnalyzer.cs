@@ -29,21 +29,14 @@ namespace PodAnalyzer
         {
             context.EnableConcurrentExecution();
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-            context.RegisterSyntaxNodeAction(AnalyzeNamedTypeDeclaration, SyntaxKind.ClassDeclaration);
-
-            // TODO: check for a property which is never assigned?
+            context.RegisterSyntaxNodeAction(AnalyzeClassOrStructDeclaration, SyntaxKind.ClassDeclaration);
+            context.RegisterSyntaxNodeAction(AnalyzeClassOrStructDeclaration, SyntaxKind.StructDeclaration);
         }
 
-        private static void AnalyzeNamedTypeDeclaration(SyntaxNodeAnalysisContext context)
+        private static void AnalyzeClassOrStructDeclaration(SyntaxNodeAnalysisContext context)
         {
-            if (context.Node.IsKind(SyntaxKind.ClassDeclaration))
-            {
-                AnalyzeClassDeclaration(context, (ClassDeclarationSyntax)context.Node);
-            }
-        }
+            var node = (TypeDeclarationSyntax)context.Node;
 
-        private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax node)
-        {
             var hasMutableAutoProperty = node.Members
                 .OfType<PropertyDeclarationSyntax>()
                 .Any(p => IsMutableAutoProperty(p));

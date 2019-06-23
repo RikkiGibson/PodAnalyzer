@@ -44,6 +44,55 @@ public class C
         }
 
         [Fact]
+        public Task StructWithSingleProperty()
+        {
+            var source = @"
+public struct S
+{
+    public int Prop { get; set; }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'S' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "S")
+            };
+
+            var fixedSource = @"
+public struct S
+{
+    public int Prop { get; }
+
+    public S(
+        int prop)
+    {
+        Prop = prop;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+        [Fact]
+        public Task PartialClass()
+        {
+            var source = @"
+public partial class C
+{
+    public int Prop { get; set; }
+}
+";
+
+            var fixedSource = @"
+public partial class C
+{
+    public int Prop { get; set; }
+}
+";
+            return VerifyCodeFixAsync(source, fixedSource);
+        }
+
+        [Fact]
         public Task MultiProperty()
         {
             var source = @"
@@ -410,7 +459,5 @@ public class C
         }
 
         // TODO: struct constructors?
-
-        // TODO: analyze expression bodied property
     }
 }

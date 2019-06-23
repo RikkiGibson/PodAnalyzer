@@ -230,6 +230,41 @@ static class C
         }
 
         [Fact]
+        public Task MultipleProperties_BadAssignment()
+        {
+            var beforeSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static Pod p = new Pod
+    {
+        P1 = ""hello"",
+        123 = 123
+    };
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(16, 24).WithArguments("p1", "Pod.Pod(string, string)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(18, 9).WithArguments("Pod.P1"),
+                new DiagnosticResult("CS0131", DiagnosticSeverity.Error).WithLocation(19, 9),
+                new DiagnosticResult("CS0747", DiagnosticSeverity.Error).WithLocation(19, 9),
+            };
+
+            var afterSource = multiplePropertiesClassDecl + @"
+static class C
+{
+    static Pod p = new Pod
+    {
+        P1 = ""hello"",
+        123 = 123
+    };
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
         public Task VerbatimParameter()
         {
             var beforeSource = @"

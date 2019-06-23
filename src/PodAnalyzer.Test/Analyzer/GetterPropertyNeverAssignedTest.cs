@@ -46,7 +46,26 @@ class C
     int P { get; }
     C(int p)
     {
-        P = P;
+        P = p;
+    }
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
+        public Task GetterOnlyAutoProperty_NotDefinitelyAssigned_NoWarning()
+        {
+            var source = @"
+class C
+{
+    int P { get; }
+    C(int p)
+    {
+        if (p == 0)
+        {
+            P = p;
+        }
     }
 }
 ";
