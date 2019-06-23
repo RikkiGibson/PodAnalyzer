@@ -31,7 +31,8 @@ namespace PodAnalyzer
 
         public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
-            var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+            var cancellationToken = context.CancellationToken;
+            var root = await context.Document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
             var diagnostic = context.Diagnostics.First();
             var diagnosticSpan = diagnostic.Location.SourceSpan;
@@ -44,7 +45,7 @@ namespace PodAnalyzer
                 return;
             }
 
-            var semanticModel = await context.Document.GetSemanticModelAsync();
+            var semanticModel = await context.Document.GetSemanticModelAsync(cancellationToken);
             var assignments = objectCreation.Initializer.Expressions.OfType<AssignmentExpressionSyntax>();
             var hasAssignToGetterOnly = assignments.All(a => IsAssignToGetterOnlyProperty(semanticModel, a));
             if (!hasAssignToGetterOnly)

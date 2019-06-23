@@ -74,7 +74,7 @@ namespace PodAnalyzer
             return newProperty;
         }
 
-        private SyntaxList<MemberDeclarationSyntax> RewriteMembers(TypeDeclarationSyntax typeDecl)
+        private SyntaxList<MemberDeclarationSyntax> RewriteMembers(TypeDeclarationSyntax typeDecl, SemanticModel semanticModel)
         {
             var members = typeDecl.Members;
             var membersSize = members.Count + 1;
@@ -84,19 +84,26 @@ namespace PodAnalyzer
 
             for (int i = 0; i < typeDecl.Members.Count; i++)
             {
-
                 membersBuilder.Add(VisitMember(members[i]));
 
                 if (i == constructorIndex)
                 {
-                    membersBuilder.Add(GenerateConstructor(typeDecl));
+                    var ctorOpt = GenerateConstructorIfNecessary(typeDecl, semanticModel);
+                    if (ctorOpt != null)
+                    {
+                        membersBuilder.Add(ctorOpt);
+                    }
                 }
             }
 
             // there were no constructors
             if (constructorIndex == -1)
             {
-                membersBuilder.Add(GenerateConstructor(typeDecl));
+                var ctorOpt = GenerateConstructorIfNecessary(typeDecl, semanticModel);
+                if (ctorOpt != null)
+                {
+                    membersBuilder.Add(ctorOpt);
+                }
             }
 
             var newMembers = SyntaxFactory.List(membersBuilder.ToImmutable());
@@ -140,13 +147,41 @@ namespace PodAnalyzer
             return exprStatement;
         }
 
-        private ConstructorDeclarationSyntax GenerateConstructor(TypeDeclarationSyntax typeDecl)
+        private ConstructorDeclarationSyntax GenerateConstructorIfNecessary(TypeDeclarationSyntax typeDecl, SemanticModel semanticModel)
         {
             var properties = typeDecl.Members
                 .OfType<PropertyDeclarationSyntax>()
                 .Where(p => p.AccessorList?.Accessors.Any(a => a.Body == null) == true
                     && !p.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
                 .ToImmutableArray();
+
+            foreach (var ctorSyntax in typeDecl.Members.OfType<ConstructorDeclarationSyntax>())
+            {
+                // TODO: cancellation token
+                var ctorSymbol = semanticModel.GetDeclaredSymbol(ctorSyntax);
+                var parameters = ctorSymbol.Parameters;
+                if (ctorSymbol.Parameters.Length != properties.Length)
+                {
+                    continue;
+                }
+
+                var parametersMatchProperties = true;
+                var length = parameters.Length;
+                for (var i = 0; i < length; i++)
+                {
+                    var sameType = parameters[i].Type.Equals(semanticModel.GetSymbolInfo(properties[i].Type).Symbol);
+                    if (!sameType)
+                    {
+                        parametersMatchProperties = false;
+                    }
+                }
+
+                if (parametersMatchProperties)
+                {
+                    // generating a constructor is redundant
+                    return null;
+                }
+            }
 
             var parms = properties.Select(p => GenerateParameter(p)).ToImmutableArray();
             var separator = SyntaxFactory.ParseToken("," + nl);
@@ -180,8 +215,9 @@ namespace PodAnalyzer
 
         private async Task<Solution> MakeImmutableAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
+            var semanticModel = await document.GetSemanticModelAsync();
             var newTypeDecl = typeDecl
-                .WithMembers(RewriteMembers(typeDecl));
+                .WithMembers(RewriteMembers(typeDecl, semanticModel));
 
             var root = await document.GetSyntaxRootAsync(cancellationToken);
             var newRoot = root.ReplaceNode(typeDecl, newTypeDecl);
