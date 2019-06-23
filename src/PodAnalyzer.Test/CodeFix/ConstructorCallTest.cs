@@ -265,6 +265,148 @@ static class C
         }
 
         [Fact]
+        public Task ContainingCollectionInitializer()
+        {
+            var beforeSource = @"
+using System.Collections.Generic;
+
+public class Pod
+{
+    public List<int> Numbers { get; }
+
+    public Pod(List<int> numbers)
+    {
+        Numbers = numbers;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod
+        {
+            Numbers = new List<int> { 1, 2, 3 }
+        };
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(18, 13).WithArguments("numbers", "Pod.Pod(List<int>)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(20, 13).WithArguments("Pod.Numbers"),
+            };
+
+            var afterSource = @"
+using System.Collections.Generic;
+
+public class Pod
+{
+    public List<int> Numbers { get; }
+
+    public Pod(List<int> numbers)
+    {
+        Numbers = numbers;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod(
+            numbers: new List<int> { 1, 2, 3 }
+        );
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
+        public Task ContainingNestedCollectionInitializer()
+        {
+            var beforeSource = @"
+using System.Collections.Generic;
+
+public class Widget
+{
+    public int Prop { get; set; }
+}
+
+public class Pod
+{
+    public List<Widget> Widgets { get; }
+
+    public Pod(
+        List<Widget> widgets)
+    {
+        Widgets = widgets;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod
+        {
+            Widgets = new List<Widget>
+            {
+                new Widget { Prop = 1 },
+                new Widget { Prop = 2 },
+                new Widget { Prop = 3 }
+            }
+        };
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(24, 13).WithArguments("widgets", "Pod.Pod(List<Widget>)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(26, 13).WithArguments("Pod.Widgets"),
+            };
+
+            var afterSource = @"
+using System.Collections.Generic;
+
+public class Widget
+{
+    public int Prop { get; set; }
+}
+
+public class Pod
+{
+    public List<Widget> Widgets { get; }
+
+    public Pod(
+        List<Widget> widgets)
+    {
+        Widgets = widgets;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod(
+            widgets: new List<Widget>
+            {
+                new Widget { Prop = 1 },
+                new Widget { Prop = 2 },
+                new Widget { Prop = 3 }
+            }
+        );
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
         public Task VerbatimParameter()
         {
             var beforeSource = @"
@@ -314,6 +456,68 @@ class C
         new Pod(
             @long: 0.0
         );
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
+
+        [Fact]
+        public Task Indexer()
+        {
+            var beforeSource = @"
+public class Pod
+{
+    public int this[int i] { get => i + _number; }
+
+    private int _number;
+    public Pod(int number)
+    {
+        _number = number;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod
+        {
+            [0] = 0,
+            [1] = 1
+        };
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(17, 13).WithArguments("number", "Pod.Pod(int)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(19, 13).WithArguments("Pod.this[int]"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(20, 13).WithArguments("Pod.this[int]"),
+            };
+
+            var afterSource = @"
+public class Pod
+{
+    public int this[int i] { get => i + _number; }
+
+    private int _number;
+    public Pod(int number)
+    {
+        _number = number;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod
+        {
+            [0] = 0,
+            [1] = 1
+        };
     }
 }
 ";

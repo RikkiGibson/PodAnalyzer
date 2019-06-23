@@ -64,7 +64,7 @@ namespace PodAnalyzer
         {
             var info = semanticModel.GetSymbolInfo(assignment.Left);
             var symbol = (info.Symbol ?? info.CandidateSymbols.FirstOrDefault()) as IPropertySymbol;
-            if (symbol == null || !symbol.IsReadOnly)
+            if (symbol == null || !symbol.IsReadOnly || symbol.IsIndexer)
             {
                 return false;
             }
