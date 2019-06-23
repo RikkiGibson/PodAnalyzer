@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class TypeCanBeImmutableAnalyzer : DiagnosticAnalyzer
     {
-        internal static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor POD003 =
             new DiagnosticDescriptor(id: "POD003",
                 title: new LocalizableResourceString(nameof(Resources.POD003Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD003MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -23,13 +23,15 @@ namespace PodAnalyzer
                 isEnabledByDefault: true,
                 description: new LocalizableResourceString(nameof(Resources.POD003Description), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(POD003); } }
 
         public override void Initialize(AnalysisContext context)
         {
             context.EnableConcurrentExecution();
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.RegisterSyntaxNodeAction(AnalyzeNamedTypeDeclaration, SyntaxKind.ClassDeclaration);
+
+            // TODO: check for a property which is never assigned?
         }
 
         private static void AnalyzeNamedTypeDeclaration(SyntaxNodeAnalysisContext context)
@@ -46,9 +48,13 @@ namespace PodAnalyzer
                 .OfType<PropertyDeclarationSyntax>()
                 .Any(p => IsMutableAutoProperty(p));
 
-            if (hasMutableAutoProperty)
+            // TODO: consider relaxing this constraint in the future
+            var isPartial = node.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+
+            if (hasMutableAutoProperty && !isPartial)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rule, node.GetLocation(), node.Identifier));
+                context.ReportDiagnostic(Diagnostic.Create(POD003, node.GetLocation(), node.Identifier));
+                return;
             }
         }
 

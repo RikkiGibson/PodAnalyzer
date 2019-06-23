@@ -22,7 +22,7 @@ namespace PodAnalyzer
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(TypeCanBeImmutableAnalyzer.Rule.Id, GetterPropertyNeverAssignedAnalyzer.POD002.Id); }
+            get { return ImmutableArray.Create(TypeCanBeImmutableAnalyzer.POD003.Id, GetterPropertyNeverAssignedAnalyzer.POD002.Id); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -49,16 +49,25 @@ namespace PodAnalyzer
                 diagnostic);
         }
 
+        private static MemberDeclarationSyntax VisitMember(MemberDeclarationSyntax member)
+        {
+            if (member is PropertyDeclarationSyntax property)
+            {
+                var accessor = property.AccessorList.Accessors.FirstOrDefault();
+                if (accessor != null && accessor.Body == null)
+                {
+                    return GetterOnlyProperty(property);
+                }
+            }
+
+            return member;
+        }
+
         private static PropertyDeclarationSyntax GetterOnlyProperty(PropertyDeclarationSyntax propertySyntax)
         {
-            var idString = propertySyntax.Identifier.Text;
-            var newIdString = idString.Substring(0, 1).ToUpper() + idString.Substring(1);
-            var newIdToken = SyntaxFactory.Identifier(newIdString);
-
             var newAccessors = propertySyntax.AccessorList.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
             var newAccessorList = propertySyntax.AccessorList.WithAccessors(SyntaxFactory.List(newAccessors));
             var newProperty = propertySyntax
-                .WithIdentifier(newIdToken)
                 .WithAccessorList(newAccessorList);
 
             return newProperty;
@@ -66,61 +75,86 @@ namespace PodAnalyzer
 
         private SyntaxList<MemberDeclarationSyntax> RewriteMembers(ClassDeclarationSyntax typeDecl)
         {
-            var autoProperties = typeDecl.Members
-                .OfType<PropertyDeclarationSyntax>()
-                .Where(ps => ps.AccessorList.Accessors.Any(a => a.Body == null))
-                .ToImmutableArray();
+            var members = typeDecl.Members;
+            var membersSize = members.Count + 1;
+            var membersBuilder = ImmutableArray.CreateBuilder<MemberDeclarationSyntax>(membersSize);
 
-            var getterProperties = autoProperties
-                .Select(ps => GetterOnlyProperty(ps))
-                .ToImmutableArray();
+            var constructorIndex = members.LastIndexOf(m => m.IsKind(SyntaxKind.ConstructorDeclaration));
 
-            var ctor = GenerateConstructor(typeDecl, getterProperties);
+            for (int i = 0; i < typeDecl.Members.Count; i++)
+            {
 
-            var otherMembers = typeDecl.Members
-                .Where(ps => !autoProperties.Contains(ps));
+                membersBuilder.Add(VisitMember(members[i]));
 
-            var newMembers = SyntaxFactory.List(getterProperties.Concat(otherMembers).Concat(new[] { ctor }));
+                if (i == constructorIndex)
+                {
+                    membersBuilder.Add(GenerateConstructor(typeDecl));
+                }
+            }
 
+            // there were no constructors
+            if (constructorIndex == -1)
+            {
+                membersBuilder.Add(GenerateConstructor(typeDecl));
+            }
+
+            var newMembers = SyntaxFactory.List(membersBuilder.ToImmutable());
             return newMembers;
         }
 
         private ParameterSyntax GenerateParameter(PropertyDeclarationSyntax property)
         {
             var idString = property.Identifier.Text;
-            var newIdString = idString.Substring(0, 1).ToLower() + idString.Substring(1);
-            var newIdToken = SyntaxFactory.Identifier(newIdString);
 
-            var param = SyntaxFactory
-                .Parameter(
-                    attributeLists: SyntaxFactory.List<AttributeListSyntax>(),
-                    modifiers: SyntaxFactory.TokenList(),
-                    type: property.Type,
-                    identifier: newIdToken,
-                    @default: null)
-                .NormalizeWhitespace(elasticTrivia: true);
+            var newIdString = char.ToLowerInvariant(idString[0]) + idString.Substring(1);
+            SyntaxToken newIdToken = ((IdentifierNameSyntax)SyntaxFactory.ParseName(newIdString)).Identifier;
+            if (newIdToken.ContainsDiagnostics)
+            {
+                // Assume it's because the lowercased param name is reserved
+                newIdToken = SyntaxFactory.VerbatimIdentifier(SyntaxTriviaList.Empty, newIdString, newIdString, SyntaxTriviaList.Empty);
+            }
 
-            return param;
+            // `int Prop { get; }` becomes `int prop`
+            var param = SyntaxFactory.Parameter(
+                attributeLists: SyntaxFactory.List<AttributeListSyntax>(),
+                modifiers: SyntaxFactory.TokenList(),
+                type: property.Type,
+                identifier: newIdToken,
+                @default: null);
+
+            // TODO: can user indent settings be respected?
+            var indentedParam = param.WithLeadingTrivia(
+                SyntaxFactory.TriviaList(
+                    new[] { property.GetLeadingTrivia().Last(t => t.IsKind(SyntaxKind.WhitespaceTrivia)) }
+                        .Concat(SyntaxFactory.ParseLeadingTrivia("    "))));
+
+            return indentedParam;
         }
 
         private ExpressionStatementSyntax GenerateAssignmentStatement(
             PropertyDeclarationSyntax property,
             ParameterSyntax parm)
         {
-            var exprStatement = (ExpressionStatementSyntax)SyntaxFactory
-                .ParseStatement($"{property.Identifier} = {parm.Identifier};{nl}")
-                .NormalizeWhitespace(elasticTrivia: true)
+            var exprStatement = SyntaxFactory.ExpressionStatement(
+                    SyntaxFactory.AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        SyntaxFactory.IdentifierName(property.Identifier),
+                        SyntaxFactory.IdentifierName(parm.Identifier)))
+                .WithLeadingTrivia(parm.GetLeadingTrivia())
                 .WithTrailingTrivia(SyntaxFactory.ParseTrailingTrivia(nl));
 
             return exprStatement;
         }
 
-        private ConstructorDeclarationSyntax GenerateConstructor(
-            ClassDeclarationSyntax typeDecl,
-            ImmutableArray<PropertyDeclarationSyntax> properties)
+        private ConstructorDeclarationSyntax GenerateConstructor(ClassDeclarationSyntax typeDecl)
         {
-            var leadingTrivia = typeDecl.GetLeadingTrivia();
-            var parms = properties.Select(p => GenerateParameter(p).WithLeadingTrivia(leadingTrivia)).ToImmutableArray();
+            var properties = typeDecl.Members
+                .OfType<PropertyDeclarationSyntax>()
+                .Where(p => p.AccessorList.Accessors.Any(a => a.Body == null)
+                    && !p.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
+                .ToImmutableArray();
+
+            var parms = properties.Select(p => GenerateParameter(p)).ToImmutableArray();
             var separator = SyntaxFactory.ParseToken("," + nl);
             var separators = Enumerable.Repeat(separator, parms.Length - 1);
             var separatedList = SyntaxFactory.SeparatedList(parms, separators);
@@ -133,11 +167,16 @@ namespace PodAnalyzer
                 statements[i] = GenerateAssignmentStatement(properties[i], parms[i]);
             }
 
+            var visiblityMods = typeDecl.Modifiers
+                .Select(m => m.Kind())
+                .Where(k => k == SyntaxKind.PublicKeyword || k == SyntaxKind.InternalKeyword || k == SyntaxKind.ProtectedKeyword || k == SyntaxKind.PrivateKeyword)
+                .Select(SyntaxFactory.Token);
+
             var ctor = SyntaxFactory
                 .ConstructorDeclaration(
                     attributeLists: SyntaxFactory.List<AttributeListSyntax>(),
-                    modifiers: SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)),
-                    identifier: typeDecl.Identifier.WithTrailingTrivia(),
+                    modifiers: SyntaxFactory.TokenList(visiblityMods),
+                    identifier: typeDecl.Identifier.WithoutTrivia(),
                     parameterList: parmsList,
                     initializer: null,
                     body: SyntaxFactory.Block(statements));
@@ -148,8 +187,7 @@ namespace PodAnalyzer
         private async Task<Solution> MakeImmutableAsync(Document document, ClassDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
             var newTypeDecl = typeDecl
-                .WithMembers(RewriteMembers(typeDecl))
-                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                .WithMembers(RewriteMembers(typeDecl));
 
             var root = await document.GetSyntaxRootAsync(cancellationToken);
             var newRoot = root.ReplaceNode(typeDecl, newTypeDecl);

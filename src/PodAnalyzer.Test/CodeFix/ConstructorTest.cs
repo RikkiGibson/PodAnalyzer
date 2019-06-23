@@ -1,49 +1,379 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using static PodAnalyzer.Test.TestUtilities;
 
 namespace PodAnalyzer.Test
 {
-    public class ConstructorTest
+    public class ConstructorTest: CodeFixVerifier<TypeCanBeImmutableAnalyzer, ConstructorProvider>
     {
-        const string _resourceFolderPath = "Resources/CodeFix";
-
-        private readonly AnalyzerTester _analyzerTester = new AnalyzerTester(
-            resourceFolderPath: _resourceFolderPath,
-            analyzer: new TypeCanBeImmutableAnalyzer());
-
-        private readonly CodeFixTester _codeFixTester = new CodeFixTester(new ConstructorProvider());
-        
-        async Task TestCodeFix(string baseFilename)
+        [Fact]
+        public Task SingleProperty()
         {
-            var filename = Path.ChangeExtension(baseFilename, ".cs");
-            var project = _analyzerTester.CreateTestProject(filename);
-            var diagnostics = await _analyzerTester.ComputeDiagnostics(project: project);
-            var actions = await _codeFixTester.CreateCodeActionsAsync(project.Documents.First(), diagnostics);
-            var newDocument = await _codeFixTester.ApplyFixAsync(project.Documents.First(), actions.First());
+            var source = @"
+public class C
+{
+    public int Prop { get; set; }
+}
+";
 
-            var newText = await newDocument.GetTextAsync();
-            var newTextString = newText.ToString();
-
-            // It doesn't please me to do this, but Roslyn seems to be inserting \r\n uninvited.
-            if (Environment.NewLine == "\n")
+            var expectedDiagnostics = new[]
             {
-                newTextString = newTextString.Replace("\r\n", "\n");
-            }
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
 
-            var expectedPath = Path.Combine(_resourceFolderPath, Path.ChangeExtension(baseFilename, ".out.cs"));
-            var expectedText = File.ReadAllText(expectedPath);
-            Assert.Equal(expectedText, newTextString);
+            var fixedSource = @"
+public class C
+{
+    public int Prop { get; }
+
+    public C(
+        int prop)
+    {
+        Prop = prop;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
         }
 
         [Fact]
-        public Task SimpleTest() => TestCodeFix("Test1");
+        public Task MultiProperty()
+        {
+            var source = @"
+public class C
+{
+    public int Prop1 { get; set; }
+    public string Prop2 { get; set; }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+public class C
+{
+    public int Prop1 { get; }
+    public string Prop2 { get; }
+
+    public C(
+        int prop1,
+        string prop2)
+    {
+        Prop1 = prop1;
+        Prop2 = prop2;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
 
         [Fact]
-        public Task MultiPropTest() => TestCodeFix("MultiProp");
+        public Task InternalClass()
+        {
+            var source = @"
+internal class C
+{
+    internal int Prop1 { get; set; }
+    internal string Prop2 { get; set; }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+internal class C
+{
+    internal int Prop1 { get; }
+    internal string Prop2 { get; }
+
+    internal C(
+        int prop1,
+        string prop2)
+    {
+        Prop1 = prop1;
+        Prop2 = prop2;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        [Fact]
+        public Task NestedClass()
+        {
+            var source = @"
+public class C
+{
+    private class C1
+    {
+        internal int Prop1 { get; set; }
+        internal string Prop2 { get; set; }
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C1' can be made immutable
+                GetCSharpResultAt(4, 5, TypeCanBeImmutableAnalyzer.POD003, "C1")
+            };
+
+            var fixedSource = @"
+public class C
+{
+    private class C1
+    {
+        internal int Prop1 { get; }
+        internal string Prop2 { get; }
+
+        private C1(
+            int prop1,
+            string prop2)
+        {
+            Prop1 = prop1;
+            Prop2 = prop2;
+        }
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        [Fact]
+        public Task MultipleVisibilityMods()
+        {
+            var source = @"
+public class C
+{
+    protected internal class C1
+    {
+        internal int Prop1 { get; set; }
+        internal string Prop2 { get; set; }
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C1' can be made immutable
+                GetCSharpResultAt(4, 5, TypeCanBeImmutableAnalyzer.POD003, "C1")
+            };
+
+            var fixedSource = @"
+public class C
+{
+    protected internal class C1
+    {
+        internal int Prop1 { get; }
+        internal string Prop2 { get; }
+
+        protected internal C1(
+            int prop1,
+            string prop2)
+        {
+            Prop1 = prop1;
+            Prop2 = prop2;
+        }
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        [Fact]
+        public Task MixedProperties()
+        {
+            var source = @"
+internal class C
+{
+    internal int Prop1 { get; set; }
+    internal string Prop2 { get; }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+internal class C
+{
+    internal int Prop1 { get; }
+    internal string Prop2 { get; }
+
+    internal C(
+        int prop1,
+        string prop2)
+    {
+        Prop1 = prop1;
+        Prop2 = prop2;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        [Fact]
+        public Task PreexistingConstructor()
+        {
+            var source = @"
+internal class C
+{
+    internal int Prop1 { get; set; }
+
+    internal string Prop2 { get; set; }
+
+    internal C() { }
+
+    void M1() { }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+internal class C
+{
+    internal int Prop1 { get; }
+
+    internal string Prop2 { get; }
+
+    internal C() { }
+
+    internal C(
+        int prop1,
+        string prop2)
+    {
+        Prop1 = prop1;
+        Prop2 = prop2;
+    }
+
+    void M1() { }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        [Fact]
+        public Task CantBeImmutable()
+        {
+            var source = @"
+internal class C
+{
+    internal int i;
+}
+";
+
+            var fixedSource = @"
+internal class C
+{
+    internal int i;
+}
+";
+            return VerifyCodeFixAsync(source, fixedSource);
+        }
+
+        [Fact]
+        public Task PropertyAttribute()
+        {
+            var source = @"
+class A : System.Attribute { }
+
+namespace NS
+{
+    internal class C
+    {
+
+        /// <summary>Gets the Prop1.</summary>
+        [A]
+        internal int Prop1 { get; set; }
+        internal string Prop2 { get; }
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(6,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(6, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+class A : System.Attribute { }
+
+namespace NS
+{
+    internal class C
+    {
+
+        /// <summary>Gets the Prop1.</summary>
+        [A]
+        internal int Prop1 { get; }
+        internal string Prop2 { get; }
+
+        internal C(
+            int prop1,
+            string prop2)
+        {
+            Prop1 = prop1;
+            Prop2 = prop2;
+        }
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        [Fact]
+        public Task ParamNameIsReserved()
+        {
+            var source = @"
+public class C
+{
+    public double Long { get; set; }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+public class C
+{
+    public double Long { get; }
+
+    public C(
+        double @long)
+    {
+        Long = @long;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
     }
 }
