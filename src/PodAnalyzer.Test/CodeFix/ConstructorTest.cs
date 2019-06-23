@@ -375,5 +375,42 @@ public class C
 ";
             return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
         }
+
+        [Fact]
+        public Task ExpressionBodiedProperty()
+        {
+            var source = @"
+public class C
+{
+    public int Computed => 42;
+    public int Prop { get; set; }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                // Test0.cs(2,1): hidden POD003: Type 'C' can be made immutable
+                GetCSharpResultAt(2, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+            };
+
+            var fixedSource = @"
+public class C
+{
+    public int Computed => 42;
+    public int Prop { get; }
+
+    public C(
+        int prop)
+    {
+        Prop = prop;
+    }
+}
+";
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource);
+        }
+
+        // TODO: struct constructors?
+
+        // TODO: analyze expression bodied property
     }
 }

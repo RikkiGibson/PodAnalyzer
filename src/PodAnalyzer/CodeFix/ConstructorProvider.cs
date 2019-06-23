@@ -54,7 +54,7 @@ namespace PodAnalyzer
         {
             if (member is PropertyDeclarationSyntax property)
             {
-                var accessor = property.AccessorList.Accessors.FirstOrDefault();
+                var accessor = property.AccessorList?.Accessors.FirstOrDefault();
                 if (accessor != null && accessor.Body == null)
                 {
                     return GetterOnlyProperty(property);
@@ -144,7 +144,7 @@ namespace PodAnalyzer
         {
             var properties = typeDecl.Members
                 .OfType<PropertyDeclarationSyntax>()
-                .Where(p => p.AccessorList.Accessors.Any(a => a.Body == null)
+                .Where(p => p.AccessorList?.Accessors.Any(a => a.Body == null) == true
                     && !p.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
                 .ToImmutableArray();
 

@@ -60,13 +60,13 @@ namespace PodAnalyzer
 
         private static bool IsMutableAutoProperty(PropertyDeclarationSyntax property)
         {
-            var getter = property.AccessorList.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
+            var getter = property.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
             if (getter == null || getter.Body != null)
             {
                 return false;
             }
 
-            var setter = property.AccessorList.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
+            var setter = property.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
             if (setter == null)
             {
                 return false;
