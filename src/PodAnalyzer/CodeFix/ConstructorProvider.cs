@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using PodAnalyzer.Utils;
 
 namespace PodAnalyzer
 {
@@ -105,14 +106,7 @@ namespace PodAnalyzer
         private ParameterSyntax GenerateParameter(PropertyDeclarationSyntax property)
         {
             var idString = property.Identifier.Text;
-
-            var newIdString = char.ToLowerInvariant(idString[0]) + idString.Substring(1);
-            SyntaxToken newIdToken = ((IdentifierNameSyntax)SyntaxFactory.ParseName(newIdString)).Identifier;
-            if (newIdToken.ContainsDiagnostics)
-            {
-                // Assume it's because the lowercased param name is reserved
-                newIdToken = SyntaxFactory.VerbatimIdentifier(SyntaxTriviaList.Empty, newIdString, newIdString, SyntaxTriviaList.Empty);
-            }
+            var newIdToken = SyntaxTokenUtils.CreateParameterName(propertyName: idString);
 
             // `int Prop { get; }` becomes `int prop`
             var param = SyntaxFactory.Parameter(

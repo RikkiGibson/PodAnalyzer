@@ -26,6 +26,19 @@ public class A
         }
 
         [Fact]
+        public Task UsedParam_Verbatim_NoWarning()
+        {
+            var source = @"
+public class A
+{
+    public double Long { get; }
+    public A(double @long) { Long = @long; }
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
         public Task ExternConstructor_NoWarning()
         {
             var source = @"

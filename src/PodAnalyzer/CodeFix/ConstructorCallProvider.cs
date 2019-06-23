@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using PodAnalyzer.Utils;
 
 namespace PodAnalyzer
 {
@@ -77,7 +78,7 @@ namespace PodAnalyzer
         {
             var identifier = ((IdentifierNameSyntax)assignment.Left).Identifier;
             var idString = identifier.Text;
-            var newIdString = idString.Substring(0, 1).ToLower() + idString.Substring(1);
+            var newIdToken = SyntaxTokenUtils.CreateParameterName(propertyName: idString);
 
             var rightTrivia = assignment.Right.GetTrailingTrivia();
 
@@ -85,7 +86,7 @@ namespace PodAnalyzer
             var assignmentRight = rightTrivia.ToFullString() == " " ? assignment.Right.WithoutTrailingTrivia() : assignment.Right;
 
             var arg = SyntaxFactory.Argument(
-                nameColon: SyntaxFactory.NameColon(newIdString)
+                nameColon: SyntaxFactory.NameColon(SyntaxFactory.IdentifierName(newIdToken))
                     .WithLeadingTrivia(identifier.LeadingTrivia)
                     .WithTrailingTrivia(assignment.OperatorToken.TrailingTrivia),
                 refKindKeyword: SyntaxFactory.Token(SyntaxKind.None),

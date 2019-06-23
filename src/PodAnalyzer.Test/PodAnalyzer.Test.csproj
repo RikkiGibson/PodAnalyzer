@@ -20,11 +20,4 @@
   <ItemGroup>
     <ProjectReference Include="..\PodAnalyzer\PodAnalyzer.csproj" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Compile Remove="Resources\**\*.cs" />
-    <None Include="Resources\**\*.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>

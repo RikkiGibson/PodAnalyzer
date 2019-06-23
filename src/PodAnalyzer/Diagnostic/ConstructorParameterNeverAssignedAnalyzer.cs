@@ -80,7 +80,7 @@ namespace PodAnalyzer
             IdentifierNameSyntax identifier,
             IParameterSymbol param)
         {
-            if (identifier.Identifier.Text != param.Name)
+            if (identifier.Identifier.ValueText != param.Name)
             {
                 return false;
             }

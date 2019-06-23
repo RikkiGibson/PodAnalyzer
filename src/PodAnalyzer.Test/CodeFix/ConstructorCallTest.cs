@@ -228,5 +228,61 @@ static class C
 ";
             return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
         }
+
+        [Fact]
+        public Task VerbatimParameter()
+        {
+            var beforeSource = @"
+public class Pod
+{
+    public double Long { get; }
+
+    public Pod(double @long)
+    {
+        Long = @long;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod
+        {
+            Long = 0.0
+        };
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(16, 13).WithArguments("long", "Pod.Pod(double)"),
+                new DiagnosticResult("CS0200", DiagnosticSeverity.Error).WithLocation(18, 13).WithArguments("Pod.Long"),
+            };
+
+            var afterSource = @"
+public class Pod
+{
+    public double Long { get; }
+
+    public Pod(double @long)
+    {
+        Long = @long;
+    }
+}
+
+class C
+{
+    static void Test()
+    {
+        new Pod(
+            @long: 0.0
+        );
+    }
+}
+";
+            return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
+        }
     }
 }
