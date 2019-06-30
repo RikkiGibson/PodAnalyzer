@@ -214,8 +214,8 @@ public class C
 
             var expectedDiagnostics = new[]
             {
-                // Test0.cs(2,1): hidden POD003: Type 'C1' can be made immutable
-                GetCSharpResultAt(4, 5, TypeCanBeImmutableAnalyzer.POD003, "C1")
+                // Test0.cs(2,1): hidden POD003: Type 'C.C1' can be made immutable
+                GetCSharpResultAt(4, 5, TypeCanBeImmutableAnalyzer.POD003, "C.C1")
             };
 
             var fixedSource = @"
@@ -255,8 +255,8 @@ public class C
 
             var expectedDiagnostics = new[]
             {
-                // Test0.cs(2,1): hidden POD003: Type 'C1' can be made immutable
-                GetCSharpResultAt(4, 5, TypeCanBeImmutableAnalyzer.POD003, "C1")
+                // Test0.cs(2,1): hidden POD003: Type 'C.C1' can be made immutable
+                GetCSharpResultAt(4, 5, TypeCanBeImmutableAnalyzer.POD003, "C.C1")
             };
 
             var fixedSource = @"
@@ -400,8 +400,8 @@ namespace NS
 
             var expectedDiagnostics = new[]
             {
-                // Test0.cs(6,1): hidden POD003: Type 'C' can be made immutable
-                GetCSharpResultAt(6, 1, TypeCanBeImmutableAnalyzer.POD003, "C")
+                // Test0.cs(6,1): hidden POD003: Type 'NS.C' can be made immutable
+                GetCSharpResultAt(6, 1, TypeCanBeImmutableAnalyzer.POD003, "NS.C")
             };
 
             var fixedSource = @"

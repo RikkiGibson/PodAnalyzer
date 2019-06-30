@@ -21,8 +21,8 @@ class C
 }
 ";
             return VerifyAnalyzerAsync(source,
-                // Test0.cs(4,9): warning POD002: Getter-only property 'P' was never assigned to
-                GetCSharpResultAt(4, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "P"));
+                // Test0.cs(4,9): warning POD002: Getter-only property 'C.P' was never assigned to
+                GetCSharpResultAt(4, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "C.P"));
         }
 
         [Fact]
@@ -109,8 +109,8 @@ class C
 }
 ";
             return VerifyAnalyzerAsync(source,
-                // Test0.cs(4,9): warning POD002: Getter-only property 'P' was never assigned to
-                GetCSharpResultAt(4, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "P"));
+                // Test0.cs(4,9): warning POD002: Getter-only property 'C.P' was never assigned to
+                GetCSharpResultAt(4, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "C.P"));
         }
 
         [Fact]
@@ -125,8 +125,8 @@ class C
 }
 ";
             return VerifyAnalyzerAsync(source,
-                // Test0.cs(5,9): warning POD002: Getter-only property 'P' was never assigned to
-                GetCSharpResultAt(4, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "P"));
+                // Test0.cs(5,9): warning POD002: Getter-only property 'C.P' was never assigned to
+                GetCSharpResultAt(4, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "C.P"));
         }
 
         [Fact]
@@ -159,8 +159,8 @@ class C2 : C1
 }
 ";
             return VerifyAnalyzerAsync(source,
-                // Test0.cs(9,9): warning POD002: Getter-only property 'P' was never assigned to
-                GetCSharpResultAt(9, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "P"));
+                // Test0.cs(9,9): warning POD002: Getter-only property 'C2.P' was never assigned to
+                GetCSharpResultAt(9, 9, GetterPropertyNeverAssignedAnalyzer.POD002, "C2.P"));
         }
 
         [Fact]

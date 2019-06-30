@@ -48,7 +48,7 @@ namespace PodAnalyzer
 
             foreach (var node in assignments)
             {
-                var symbol = context.SemanticModel.GetSymbolInfo(node.Left).Symbol;
+                var symbol = context.SemanticModel.GetSymbolInfo(node.Left, context.CancellationToken).Symbol;
                 var diagnostic = Diagnostic.Create(POD001, node.GetLocation(), symbol);
                 context.ReportDiagnostic(diagnostic);
             }
@@ -63,8 +63,8 @@ namespace PodAnalyzer
                 return false;
             }
 
-            var lhsSymbol = context.SemanticModel.GetSymbolInfo(left).Symbol;
-            var rhsSymbol = context.SemanticModel.GetSymbolInfo(left).Symbol;
+            var lhsSymbol = context.SemanticModel.GetSymbolInfo(left, context.CancellationToken).Symbol;
+            var rhsSymbol = context.SemanticModel.GetSymbolInfo(left, context.CancellationToken).Symbol;
 
             if (lhsSymbol?.Kind != SymbolKind.Property || rhsSymbol?.Kind != SymbolKind.Property)
             {

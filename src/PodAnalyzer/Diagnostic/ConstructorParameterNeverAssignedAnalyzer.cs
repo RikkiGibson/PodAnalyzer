@@ -86,7 +86,7 @@ namespace PodAnalyzer
             }
 
             var semanticModel = context.Compilation.GetSemanticModel(identifier.SyntaxTree);
-            var idSymbol = semanticModel.GetSymbolInfo(identifier).Symbol;
+            var idSymbol = semanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol;
             return param.Equals(idSymbol);
         }
     }

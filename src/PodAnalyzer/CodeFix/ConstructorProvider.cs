@@ -74,7 +74,7 @@ namespace PodAnalyzer
             return newProperty;
         }
 
-        private SyntaxList<MemberDeclarationSyntax> RewriteMembers(TypeDeclarationSyntax typeDecl, SemanticModel semanticModel)
+        private SyntaxList<MemberDeclarationSyntax> RewriteMembers(TypeDeclarationSyntax typeDecl, SemanticModel semanticModel, CancellationToken cancellationToken)
         {
             var members = typeDecl.Members;
             var membersSize = members.Count + 1;
@@ -88,7 +88,7 @@ namespace PodAnalyzer
 
                 if (i == constructorIndex)
                 {
-                    var ctorOpt = GenerateConstructorIfNecessary(typeDecl, semanticModel);
+                    var ctorOpt = GenerateConstructorIfNecessary(typeDecl, semanticModel, cancellationToken);
                     if (ctorOpt != null)
                     {
                         membersBuilder.Add(ctorOpt);
@@ -99,7 +99,7 @@ namespace PodAnalyzer
             // there were no constructors
             if (constructorIndex == -1)
             {
-                var ctorOpt = GenerateConstructorIfNecessary(typeDecl, semanticModel);
+                var ctorOpt = GenerateConstructorIfNecessary(typeDecl, semanticModel, cancellationToken);
                 if (ctorOpt != null)
                 {
                     membersBuilder.Add(ctorOpt);
@@ -147,7 +147,7 @@ namespace PodAnalyzer
             return exprStatement;
         }
 
-        private ConstructorDeclarationSyntax GenerateConstructorIfNecessary(TypeDeclarationSyntax typeDecl, SemanticModel semanticModel)
+        private ConstructorDeclarationSyntax GenerateConstructorIfNecessary(TypeDeclarationSyntax typeDecl, SemanticModel semanticModel, CancellationToken cancellationToken)
         {
             var properties = typeDecl.Members
                 .OfType<PropertyDeclarationSyntax>()
@@ -169,7 +169,7 @@ namespace PodAnalyzer
                 var length = parameters.Length;
                 for (var i = 0; i < length; i++)
                 {
-                    var sameType = parameters[i].Type.Equals(semanticModel.GetSymbolInfo(properties[i].Type).Symbol);
+                    var sameType = parameters[i].Type.Equals(semanticModel.GetSymbolInfo(properties[i].Type, cancellationToken).Symbol);
                     if (!sameType)
                     {
                         parametersMatchProperties = false;
@@ -215,11 +215,11 @@ namespace PodAnalyzer
 
         private async Task<Solution> MakeImmutableAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
         {
-            var semanticModel = await document.GetSemanticModelAsync();
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
             var newTypeDecl = typeDecl
-                .WithMembers(RewriteMembers(typeDecl, semanticModel));
+                .WithMembers(RewriteMembers(typeDecl, semanticModel, cancellationToken));
 
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var newRoot = root.ReplaceNode(typeDecl, newTypeDecl);
 
             var newDoc = document.WithSyntaxRoot(newRoot);

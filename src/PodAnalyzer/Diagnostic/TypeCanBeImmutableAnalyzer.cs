@@ -46,7 +46,7 @@ namespace PodAnalyzer
 
             if (hasMutableAutoProperty && !isPartial)
             {
-                context.ReportDiagnostic(Diagnostic.Create(POD003, node.GetLocation(), node.Identifier));
+                context.ReportDiagnostic(Diagnostic.Create(POD003, node.GetLocation(), context.SemanticModel.GetDeclaredSymbol(node, context.CancellationToken)));
                 return;
             }
         }

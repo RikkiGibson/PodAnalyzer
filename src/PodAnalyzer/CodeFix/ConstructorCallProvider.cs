@@ -47,7 +47,7 @@ namespace PodAnalyzer
 
             var semanticModel = await context.Document.GetSemanticModelAsync(cancellationToken);
             var assignments = objectCreation.Initializer.Expressions.OfType<AssignmentExpressionSyntax>();
-            var hasAssignToGetterOnly = assignments.All(a => IsAssignToGetterOnlyProperty(semanticModel, a));
+            var hasAssignToGetterOnly = assignments.All(a => IsAssignToGetterOnlyProperty(semanticModel, a, context.CancellationToken));
             if (!hasAssignToGetterOnly)
             {
                 return;
@@ -61,9 +61,9 @@ namespace PodAnalyzer
                 diagnostic);
         }
 
-        private static bool IsAssignToGetterOnlyProperty(SemanticModel semanticModel, AssignmentExpressionSyntax assignment)
+        private static bool IsAssignToGetterOnlyProperty(SemanticModel semanticModel, AssignmentExpressionSyntax assignment, CancellationToken cancellationToken)
         {
-            var info = semanticModel.GetSymbolInfo(assignment.Left);
+            var info = semanticModel.GetSymbolInfo(assignment.Left, cancellationToken);
             var symbol = (info.Symbol ?? info.CandidateSymbols.FirstOrDefault()) as IPropertySymbol;
             if (symbol == null || !symbol.IsReadOnly || symbol.IsIndexer)
             {
@@ -116,7 +116,7 @@ namespace PodAnalyzer
                 .ObjectCreationExpression(creationExpression.NewKeyword, creationExpression.Type.WithoutTrailingTrivia(), argList, initializer: null)
                 .WithTriviaFrom(creationExpression);
 
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             var newRoot = root.ReplaceNode(creationExpression, newCreation);
 
             var newDoc = document.WithSyntaxRoot(newRoot);

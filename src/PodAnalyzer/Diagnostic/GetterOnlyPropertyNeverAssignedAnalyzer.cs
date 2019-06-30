@@ -45,7 +45,7 @@ namespace PodAnalyzer
 
                 if (!IsAutoGetterPropertyAssigned(context, property))
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(POD002, property.Locations[0], property.Name));
+                    context.ReportDiagnostic(Diagnostic.Create(POD002, property.Locations[0], property));
                 }
             }
             catch (NullReferenceException e)
@@ -105,7 +105,7 @@ namespace PodAnalyzer
                 var assignments = bodyOpt.DescendantNodes().OfType<AssignmentExpressionSyntax>();
                 foreach (var assignment in assignments)
                 {
-                    var symbol = context.Compilation.GetSemanticModel(ctorSyntax.SyntaxTree).GetSymbolInfo(assignment.Left);
+                    var symbol = context.Compilation.GetSemanticModel(ctorSyntax.SyntaxTree).GetSymbolInfo(assignment.Left, context.CancellationToken);
                     if (property.Equals(symbol.Symbol))
                     {
                         isAssigned = true;
