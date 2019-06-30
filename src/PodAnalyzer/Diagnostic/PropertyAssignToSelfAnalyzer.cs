@@ -48,37 +48,40 @@ namespace PodAnalyzer
 
             foreach (var node in assignments)
             {
-                var propertyName = node.Left.ToString();
-                var diagnostic = Diagnostic.Create(POD001, node.GetLocation(), propertyName);
+                var symbol = context.SemanticModel.GetSymbolInfo(node.Left).Symbol;
+                var diagnostic = Diagnostic.Create(POD001, node.GetLocation(), symbol);
                 context.ReportDiagnostic(diagnostic);
             }
         }
 
         private static bool IsPropertyAssignToSelf(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment)
         {
-            if (!assignment.Left.IsKind(SyntaxKind.IdentifierName) || !assignment.Right.IsKind(SyntaxKind.IdentifierName))
+            var left = unwrapThisMemberAccess(assignment.Left);
+            var right = unwrapThisMemberAccess(assignment.Right);
+            if (!left.IsKind(SyntaxKind.IdentifierName) || !right.IsKind(SyntaxKind.IdentifierName))
             {
                 return false;
             }
 
-            var lhs = (IdentifierNameSyntax)assignment.Left;
-            var rhs = (IdentifierNameSyntax)assignment.Right;
+            var lhsSymbol = context.SemanticModel.GetSymbolInfo(left).Symbol;
+            var rhsSymbol = context.SemanticModel.GetSymbolInfo(left).Symbol;
 
-            if (lhs.Identifier.Text != rhs.Identifier.Text)
+            if (lhsSymbol?.Kind != SymbolKind.Property || rhsSymbol?.Kind != SymbolKind.Property)
             {
                 return false;
             }
 
-            var lhsSymbol = context.SemanticModel.GetSymbolInfo(lhs);
-            var rhsSymbol = context.SemanticModel.GetSymbolInfo(rhs);
+            return lhsSymbol.Equals(rhsSymbol);
 
-            if (lhsSymbol.Symbol?.Kind != SymbolKind.Property || rhsSymbol.Symbol?.Kind != SymbolKind.Property)
+            ExpressionSyntax unwrapThisMemberAccess(ExpressionSyntax expression)
             {
-                return false;
-            }
+                if (expression is MemberAccessExpressionSyntax access && access.Expression.IsKind(SyntaxKind.ThisExpression))
+                {
+                    return access.Name;
+                }
 
-            var isSameSymbol = object.Equals(lhsSymbol.Symbol, rhsSymbol.Symbol);
-            return isSameSymbol;
+                return expression;
+            }
         }
     }
 }
