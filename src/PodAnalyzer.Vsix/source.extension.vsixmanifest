@@ -1,12 +1,12 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="PodAnalyzer..d6e5a8e1-bfe3-4d84-b1cc-a5a82bd9233b" Version="1.0" Language="en-US" Publisher="rikki"/>
+    <Identity Id="PodAnalyzer.1753b9f4-e000-4209-9bb3-a822d59e7173" Version="1.0" Language="en-US" Publisher="rikki"/>
     <DisplayName>PodAnalyzer</DisplayName>
-    <Description xml:space="preserve">Tools for working with Plain Old Data types in C#.</Description>
+    <Description xml:space="preserve">This is a sample diagnostic extension for the .NET Compiler Platform ("Roslyn").</Description>
   </Metadata>
   <Installation>
-    <InstallationTarget Version="[14.0,]" Id="Microsoft.VisualStudio.Pro" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0,)" />
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />

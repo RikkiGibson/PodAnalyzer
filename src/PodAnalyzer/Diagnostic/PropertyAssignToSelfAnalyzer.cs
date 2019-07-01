@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class PropertyAssignToSelfAnalyzer : DiagnosticAnalyzer
     {
-        public static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor POD001 =
             new DiagnosticDescriptor(id: "POD001",
                 title: new LocalizableResourceString(nameof(Resources.POD001Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD001MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -23,54 +23,65 @@ namespace PodAnalyzer
                 isEnabledByDefault: true,
                 description: new LocalizableResourceString(nameof(Resources.POD001Description), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(POD001); } }
 
         public override void Initialize(AnalysisContext context)
         {
+            context.EnableConcurrentExecution();
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.RegisterSyntaxNodeAction(AnalyzeConstructor, ImmutableArray.Create(SyntaxKind.ConstructorDeclaration));
         }
 
         private static void AnalyzeConstructor(SyntaxNodeAnalysisContext context)
         {
-            var assignments = ((ConstructorDeclarationSyntax)context.Node)
-                .Body
+            var ctorSyntax = (ConstructorDeclarationSyntax)context.Node;
+            if (ctorSyntax.Body == null && ctorSyntax.ExpressionBody == null)
+            {
+                // nothing to analyze
+                return;
+            }
+
+            var assignments = ((SyntaxNode)ctorSyntax.Body ?? ctorSyntax.ExpressionBody)
                 .DescendantNodes()
                 .OfType<AssignmentExpressionSyntax>()
                 .Where(n => IsPropertyAssignToSelf(context, n));
 
             foreach (var node in assignments)
             {
-                var propertyName = node.Left.ToString();
-                var diagnostic = Diagnostic.Create(Rule, node.GetLocation(), propertyName);
+                var symbol = context.SemanticModel.GetSymbolInfo(node.Left, context.CancellationToken).Symbol;
+                var diagnostic = Diagnostic.Create(POD001, node.GetLocation(), symbol);
                 context.ReportDiagnostic(diagnostic);
             }
         }
 
         private static bool IsPropertyAssignToSelf(SyntaxNodeAnalysisContext context, AssignmentExpressionSyntax assignment)
         {
-            if (!assignment.Left.IsKind(SyntaxKind.IdentifierName) || !assignment.Right.IsKind(SyntaxKind.IdentifierName))
+            var left = unwrapThisMemberAccess(assignment.Left);
+            var right = unwrapThisMemberAccess(assignment.Right);
+            if (!left.IsKind(SyntaxKind.IdentifierName) || !right.IsKind(SyntaxKind.IdentifierName))
             {
                 return false;
             }
 
-            var lhs = (IdentifierNameSyntax)assignment.Left;
-            var rhs = (IdentifierNameSyntax)assignment.Right;
+            var lhsSymbol = context.SemanticModel.GetSymbolInfo(left, context.CancellationToken).Symbol;
+            var rhsSymbol = context.SemanticModel.GetSymbolInfo(left, context.CancellationToken).Symbol;
 
-            if (lhs.Identifier.Text != rhs.Identifier.Text)
+            if (lhsSymbol?.Kind != SymbolKind.Property || rhsSymbol?.Kind != SymbolKind.Property)
             {
                 return false;
             }
 
-            var lhsSymbol = context.SemanticModel.GetSymbolInfo(lhs);
-            var rhsSymbol = context.SemanticModel.GetSymbolInfo(rhs);
+            return lhsSymbol.Equals(rhsSymbol);
 
-            if (lhsSymbol.Symbol?.Kind != SymbolKind.Property || rhsSymbol.Symbol?.Kind != SymbolKind.Property)
+            ExpressionSyntax unwrapThisMemberAccess(ExpressionSyntax expression)
             {
-                return false;
-            }
+                if (expression is MemberAccessExpressionSyntax access && access.Expression.IsKind(SyntaxKind.ThisExpression))
+                {
+                    return access.Name;
+                }
 
-            var isSameSymbol = object.Equals(lhsSymbol.Symbol, rhsSymbol.Symbol);
-            return isSameSymbol;
+                return expression;
+            }
         }
     }
 }

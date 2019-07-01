@@ -14,7 +14,7 @@ namespace PodAnalyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class TypeCanBeImmutableAnalyzer : DiagnosticAnalyzer
     {
-        internal static DiagnosticDescriptor Rule =
+        public static DiagnosticDescriptor POD003 =
             new DiagnosticDescriptor(id: "POD003",
                 title: new LocalizableResourceString(nameof(Resources.POD003Title), Resources.ResourceManager, typeof(Resources)),
                 messageFormat: new LocalizableResourceString(nameof(Resources.POD003MessageFormat), Resources.ResourceManager, typeof(Resources)),
@@ -23,42 +23,43 @@ namespace PodAnalyzer
                 isEnabledByDefault: true,
                 description: new LocalizableResourceString(nameof(Resources.POD003Description), Resources.ResourceManager, typeof(Resources)));
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(POD003); } }
 
         public override void Initialize(AnalysisContext context)
         {
-            context.RegisterSyntaxNodeAction(AnalyzeNamedTypeDeclaration, SyntaxKind.ClassDeclaration);
+            context.EnableConcurrentExecution();
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+            context.RegisterSyntaxNodeAction(AnalyzeClassOrStructDeclaration, SyntaxKind.ClassDeclaration);
+            context.RegisterSyntaxNodeAction(AnalyzeClassOrStructDeclaration, SyntaxKind.StructDeclaration);
         }
 
-        private static void AnalyzeNamedTypeDeclaration(SyntaxNodeAnalysisContext context)
+        private static void AnalyzeClassOrStructDeclaration(SyntaxNodeAnalysisContext context)
         {
-            if (context.Node.IsKind(SyntaxKind.ClassDeclaration))
-            {
-                AnalyzeClassDeclaration(context, (ClassDeclarationSyntax)context.Node);
-            }
-        }
+            var node = (TypeDeclarationSyntax)context.Node;
 
-        private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context, ClassDeclarationSyntax node)
-        {
             var hasMutableAutoProperty = node.Members
                 .OfType<PropertyDeclarationSyntax>()
                 .Any(p => IsMutableAutoProperty(p));
 
-            if (hasMutableAutoProperty)
+            // TODO: consider relaxing this constraint in the future
+            var isPartial = node.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+
+            if (hasMutableAutoProperty && !isPartial)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Rule, node.GetLocation(), node.Identifier));
+                context.ReportDiagnostic(Diagnostic.Create(POD003, node.GetLocation(), context.SemanticModel.GetDeclaredSymbol(node, context.CancellationToken)));
+                return;
             }
         }
 
         private static bool IsMutableAutoProperty(PropertyDeclarationSyntax property)
         {
-            var getter = property.AccessorList.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
+            var getter = property.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.GetAccessorDeclaration));
             if (getter == null || getter.Body != null)
             {
                 return false;
             }
 
-            var setter = property.AccessorList.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
+            var setter = property.AccessorList?.Accessors.FirstOrDefault(a => a.IsKind(SyntaxKind.SetAccessorDeclaration));
             if (setter == null)
             {
                 return false;
