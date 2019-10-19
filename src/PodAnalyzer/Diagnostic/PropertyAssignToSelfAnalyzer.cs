@@ -64,7 +64,7 @@ namespace PodAnalyzer
             }
 
             var lhsSymbol = context.SemanticModel.GetSymbolInfo(left, context.CancellationToken).Symbol;
-            var rhsSymbol = context.SemanticModel.GetSymbolInfo(left, context.CancellationToken).Symbol;
+            var rhsSymbol = context.SemanticModel.GetSymbolInfo(right, context.CancellationToken).Symbol;
 
             if (lhsSymbol?.Kind != SymbolKind.Property || rhsSymbol?.Kind != SymbolKind.Property)
             {

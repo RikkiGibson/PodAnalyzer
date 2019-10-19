@@ -32,6 +32,22 @@ class C
         }
 
         [Fact]
+        public Task ParameterAssignToProperty_NoWarning()
+        {
+            var source = @"
+class C
+{
+    string P { get; }
+    C(string p)
+    {
+        P = p;
+    }
+}
+";
+            return VerifyAnalyzerAsync(source);
+        }
+
+        [Fact]
         public Task PropertyAssignToSelf_ExpressionBody_Warns()
         {
             var source = @"
