@@ -523,5 +523,28 @@ class C
 ";
             return VerifyCodeFixAsync(beforeSource, expectedDiagnostics, afterSource);
         }
+
+        [Fact]
+        public Task CallMissingArgument_NotObjectCreation()
+        {
+            var source = @"
+class C
+{
+    static void M(int i) { }
+
+    static void Test()
+    {
+        M();
+    }
+}
+";
+
+            var expectedDiagnostics = new[]
+            {
+                new DiagnosticResult("CS7036", DiagnosticSeverity.Error).WithLocation(8, 9).WithArguments("i", "C.M(int)")
+            };
+
+            return VerifyCodeFixAsync(source, expectedDiagnostics, fixedSource: source);
+        }
     }
 }

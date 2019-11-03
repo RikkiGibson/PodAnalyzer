@@ -34,13 +34,18 @@ namespace PodAnalyzer
             var cancellationToken = context.CancellationToken;
             var root = await context.Document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
-            var diagnostic = context.Diagnostics.First();
+            if (context.Diagnostics.IsDefaultOrEmpty)
+            {
+                return;
+            }
+
+            var diagnostic = context.Diagnostics[0];
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var objectCreation = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<ObjectCreationExpressionSyntax>().First();
+            var objectCreation = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<ObjectCreationExpressionSyntax>().FirstOrDefault();
 
-            if (objectCreation.Initializer == null)
+            if (objectCreation?.Initializer == null)
             {
                 return;
             }
