@@ -8,3 +8,5 @@ This package contains Roslyn analyzers and code fixes intended to help you work 
 - Warn when a getter-only property is assigned to itself in a constructor or never assigned
 
 This tool is meant to reduce the amount of boilerplate you have to write with your immutable data types while helping you ensure correctness as your types evolve over time. I'm considering what other features could be helpful for people wanting to create immutable data types, such as automatic generation of Builder classes or generation of `.With` methods.
+
+Here is some new content.
